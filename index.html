@@ -41,7 +41,7 @@ textarea,input,select{border:3px solid var(--ink);border-radius:.9rem;padding:.3
   <div class="flex items-center gap-2 mr-auto"><span id="logo"></span><b class="text-lg leading-tight">Cú Đêm<br><span class="text-xs">Xác suất &amp; Thống kê</span></b></div>
   <button id="homeBtn" class="bt hidden" onclick="go('home')">🏠 Về Trang Chủ</button>
   <input id="key" type="password" placeholder="Gemini API Key" class="w-40 text-sm">
-  <select id="model" class="text-sm"><option>gemini-2.5-flash</option><option>gemini-2.0-flash</option></select>
+  <select id="model" class="text-sm"><option>gemini-3.0-flash</option><option>gemini-2.0-flash</option></select>
   <button class="bt text-sm" onclick="saveKey()">💾 Lưu Key</button>
 </header>
 <main id="app" class="max-w-5xl mx-auto p-3 md:p-6"></main>
@@ -54,7 +54,7 @@ const ls={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}
 const tx=()=>{try{window.MathJax&&MathJax.typesetPromise&&MathJax.typesetPromise()}catch(e){}};
 const toast=m=>{const t=$('#toast');t.textContent=m;t.classList.remove('hidden');clearTimeout(toast.h);toast.h=setTimeout(()=>t.classList.add('hidden'),2600)};
 const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
-let KEY='',MODEL='gemini-2.5-flash';
+let KEY='',MODEL='gemini-3.0-flash';
 const ST={view:'home',ch:1,type:'all',lv:'all',gen:[],ex:null,cfg:{scope:'all',n:5,min:15},ui:{}};
 const U=id=>ST.ui[id]||(ST.ui[id]={msgs:[],run:true});
 let prog=ls.get('prog',{done:[],streak:0,last:''});
