@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cú Đêm · Xác suất & Thống kê</title>
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;900&display=swap" rel="stylesheet">
+<script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']],displayMath:[['$$','$$']]},options:{skipHtmlTags:['script','noscript','style','textarea']}};</script>
+<script async src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js"></script>
+<style>
+:root{--ink:#2D2A4A;--lav:#D9C9FF;--mint:#BFF1DC;--peach:#FFD2D0;--butter:#FFF1B8}
+body{font-family:Nunito,system-ui,sans-serif;color:var(--ink);background:#F8FAFC;
+background-image:radial-gradient(at 8% 5%,var(--lav) 0,transparent 38%),radial-gradient(at 92% 8%,var(--mint) 0,transparent 36%),radial-gradient(at 85% 90%,var(--peach) 0,transparent 38%),radial-gradient(at 8% 92%,var(--butter) 0,transparent 36%);background-attachment:fixed}
+.pc{background:#fff;border:3px solid var(--ink);border-radius:1.5rem;box-shadow:0 6px 0 var(--ink)}
+.bt{border:3px solid var(--ink);border-radius:1rem;box-shadow:0 4px 0 var(--ink);padding:.35rem .9rem;font-weight:800;background:var(--butter);transition:all .15s;cursor:pointer}
+.bt:hover{transform:translateY(-4px);box-shadow:0 8px 0 var(--ink)}.bt:active{transform:translateY(2px);box-shadow:0 1px 0 var(--ink)}
+.bt.on{background:var(--lav)}.bt:disabled{opacity:.5}
+.tag{border:2px solid var(--ink);border-radius:999px;padding:0 .6rem;font-size:.75rem;font-weight:800}
+.opt{display:block;width:100%;text-align:left;border:3px solid var(--ink);border-radius:1rem;padding:.55rem .9rem;margin:.35rem 0;background:#fff;font-weight:700;transition:all .15s}
+.opt:hover:not(:disabled){transform:translateY(-3px);background:var(--butter)}
+.opt.ok{background:#9BEFC8;animation:pop .4s}.opt.bad{background:#FFAFB0;animation:shake .4s}.opt.sel{background:var(--lav)}
+.stage{background:linear-gradient(160deg,#2D2A4A,#4B3F8F);border-radius:1.2rem;border:3px solid var(--ink);position:relative;overflow:hidden}
+.stage canvas{width:100%;display:block;touch-action:none;cursor:grab}
+.stage button{position:absolute;right:.5rem;top:.5rem;font-size:.75rem}
+.mm .br{border:3px solid var(--ink);border-radius:1rem;padding:.6rem;font-size:.85rem}.mm li{margin:.2rem 0 0 1rem;list-style:disc}
+.root{display:inline-block;border:3px solid var(--ink);border-radius:999px;padding:.3rem 1rem;font-weight:900;background:var(--butter)}
+textarea,input,select{border:3px solid var(--ink);border-radius:.9rem;padding:.35rem .7rem;background:#fff;font-weight:700;max-width:100%}
+.blink{transform-box:fill-box;transform-origin:center;animation:blink 4s infinite}
+.wave{transform-box:fill-box;transform-origin:10% 20%;animation:wave 1.2s ease-in-out infinite}
+.float{animation:float 3s ease-in-out infinite}
+@keyframes blink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
+@keyframes wave{0%,100%{transform:rotate(0)}50%{transform:rotate(-28deg)}}
+@keyframes float{50%{transform:translateY(-8px)}}
+@keyframes pop{50%{transform:scale(1.04)}}@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+</head>
+<body class="min-h-screen">
+<header class="sticky top-0 z-30 bg-white/90 backdrop-blur border-b-4 border-[#2D2A4A] px-3 py-2 flex flex-wrap items-center gap-2">
+  <div class="flex items-center gap-2 mr-auto"><span id="logo"></span><b class="text-lg leading-tight">Cú Đêm<br><span class="text-xs">Xác suất &amp; Thống kê</span></b></div>
+  <button id="homeBtn" class="bt hidden" onclick="go('home')">🏠 Về Trang Chủ</button>
+  <input id="key" type="password" placeholder="Gemini API Key" class="w-40 text-sm">
+  <select id="model" class="text-sm"><option>gemini-2.5-flash</option><option>gemini-2.0-flash</option></select>
+  <button class="bt text-sm" onclick="saveKey()">💾 Lưu Key</button>
+</header>
+<main id="app" class="max-w-5xl mx-auto p-3 md:p-6"></main>
+<div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 pc px-4 py-2 font-extrabold hidden z-50"></div>
+
+<script>
+/* ===== Tiện ích ===== */
+const $=s=>document.querySelector(s);
+const ls={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+const tx=()=>{try{window.MathJax&&MathJax.typesetPromise&&MathJax.typesetPromise()}catch(e){}};
+const toast=m=>{const t=$('#toast');t.textContent=m;t.classList.remove('hidden');clearTimeout(toast.h);toast.h=setTimeout(()=>t.classList.add('hidden'),2600)};
+const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+let KEY='',MODEL='gemini-2.5-flash';
+const ST={view:'home',ch:1,type:'all',lv:'all',gen:[],ex:null,cfg:{scope:'all',n:5,min:15},ui:{}};
+const U=id=>ST.ui[id]||(ST.ui[id]={msgs:[],run:true});
+let prog=ls.get('prog',{done:[],streak:0,last:''});
+function markDone(id){const d=new Date(),f=x=>x.toDateString();if(!prog.done.includes(id))prog.done.push(id);
+ if(prog.last!==f(d)){const y=new Date(d-864e5);prog.streak=prog.last===f(y)?prog.streak+1:1;prog.last=f(d)}ls.set('prog',prog)}
+function saveKey(){KEY=$('#key').value.trim();MODEL=$('#model').value;ls.set('cfg',{k:KEY,m:MODEL});toast(KEY?'Đã lưu Key rồi nhé! 🦉':'Đã xoá Key – dùng dữ liệu mẫu nha 🦉')}
+
+/* ===== Linh vật Cú Đêm ===== */
+const owl=(s=120,w=true)=>`<svg viewBox="0 0 200 200" width="${s}" height="${s}" aria-label="Cú Đêm"><polygon points="52,60 44,22 82,48" fill="#9C7BEF"/><polygon points="148,60 156,22 118,48" fill="#9C7BEF"/>
+<ellipse cx="100" cy="122" rx="64" ry="64" fill="#B79CF5" stroke="#2D2A4A" stroke-width="4"/><ellipse cx="100" cy="146" rx="38" ry="40" fill="#FFF1D6"/>
+<g fill="#9C7BEF" stroke="#2D2A4A" stroke-width="3"><ellipse cx="40" cy="135" rx="14" ry="28"/><ellipse class="${w?'wave':''}" cx="164" cy="132" rx="14" ry="28"/></g>
+<circle cx="72" cy="98" r="24" fill="#fff" stroke="#2D2A4A" stroke-width="5"/><circle cx="128" cy="98" r="24" fill="#fff" stroke="#2D2A4A" stroke-width="5"/><line x1="96" y1="98" x2="104" y2="98" stroke="#2D2A4A" stroke-width="5"/>
+<g class="blink"><circle cx="74" cy="100" r="10" fill="#2D2A4A"/><circle cx="126" cy="100" r="10" fill="#2D2A4A"/><circle cx="77" cy="96" r="3" fill="#fff"/><circle cx="129" cy="96" r="3" fill="#fff"/></g>
+<polygon points="93,116 107,116 100,130" fill="#FFB84D" stroke="#2D2A4A" stroke-width="3"/>
+<polygon points="48,52 100,30 152,52 100,72" fill="#2D2A4A"/><rect x="76" y="58" width="48" height="14" fill="#2D2A4A"/><line x1="152" y1="52" x2="156" y2="82" stroke="#FFC933" stroke-width="3"/><circle cx="156" cy="85" r="5" fill="#FFC933"/>
+<g fill="#FFB84D" stroke="#2D2A4A" stroke-width="3"><ellipse cx="80" cy="186" rx="14" ry="6"/><ellipse cx="120" cy="186" rx="14" ry="6"/></g></svg>`;
+$('#logo').innerHTML=owl(42,false);
+
+/* ===== Gemini ===== */
+async function ai(contents,sys){if(!KEY)throw new Error('nokey');
+ if(typeof contents==='string')contents=[{role:'user',parts:[{text:contents}]}];
+ const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${encodeURIComponent(KEY)}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({systemInstruction:{parts:[{text:sys||''}]},contents})});
+ const j=await r.json();if(!r.ok)throw new Error(j.error&&j.error.message||r.status);
+ return(j.candidates&&j.candidates[0].content.parts||[]).map(p=>p.text||'').join('')}
+function safeJSON(t){t=String(t).replace(/```json|```/g,'').trim();const a=Math.min(...['[','{'].map(c=>t.indexOf(c)).filter(i=>i>=0)),b=Math.max(t.lastIndexOf(']'),t.lastIndexOf('}'));t=t.slice(a,b+1);
+ try{return JSON.parse(t)}catch(e){return JSON.parse(t.replace(/(?<!\\)\\(?![\\"\/u])/g,'\\\\'))}}
+const normQ=(o,i,def)=>({id:'g'+Date.now()+i,ch:+o.ch||def.ch||1,type:o.type==='essay'?'essay':'mcq',lv:o.lv||def.lv||'Vận dụng',q:o.q,opts:o.opts||[],ans:+o.ans||0,hint:o.hint||'',sol:o.sol||'',viz:o.visual3DType||o.viz||'bellcurve_3d',vp:o.vp||{},m:o.m||''});
+async function genAI(def,n){const p=`Tạo ${n} bài toán Xác suất & Thống kê bằng tiếng Việt. Chương ${def.ch||'bất kỳ trong 7 chương'}, hình thức ${def.type==='essay'?'tự luận':'trắc nghiệm 4 đáp án'}, độ khó ${def.lv||'Vận dụng'}. Chỉ trả về JSON mảng, không markdown. Công thức LaTeX dùng $...$ và PHẢI viết hai dấu gạch chéo ngược (\\\\frac). Mỗi phần tử: {"ch":số,"type":"mcq"|"essay","lv":"Cơ bản|Vận dụng|Vận dụng cao","q":"đề","opts":["A","B","C","D"],"ans":0-3,"hint":"gợi ý","sol":"lời giải chi tiết","visual3DType":"factory_3d|dice_3d|bellcurve_3d|medical_3d|finance_3d","vp":{"mu":số,"sigma":số,"p":số 0-1,"label":"tóm tắt tham số"},"m":"Dạng toán;..|Dữ kiện;..|Công thức;..|Bước giải;Bẫy hay sai"}`;
+ return safeJSON(await ai(p,'Bạn là Cú Đêm, trợ giảng Xác suất Thống kê.')).map((o,i)=>normQ(o,i,def))}
+
+/* ===== Dữ liệu mẫu ===== */
+const CH=['Xác suất và công thức tính xác suất','Biến ngẫu nhiên','Phân phối xác suất của biến ngẫu nhiên','Mẫu ngẫu nhiên và các số đặc trưng của mẫu','Khoảng ước lượng','Kiểm định giả thuyết trong thống kê','So sánh 2 tham số'];
+const M=(id,ch,type,lv,q,opts,ans,hint,sol,viz,vp,m)=>({id,ch,type,lv,q,opts,ans,hint,sol,viz,vp,m});
+const BANK=[
+M('s1',1,'mcq','Cơ bản','Gieo một con xúc xắc cân đối. Xác suất xuất hiện mặt có số chấm chẵn là?',['$1/6$','$1/3$','$1/2$','$2/3$'],2,'Đếm số kết quả thuận lợi trên tổng số kết quả.','Có 3 mặt chẵn (2,4,6) trong 6 mặt: $P=\\frac{3}{6}=\\frac12$.','dice_3d',{label:'Xúc xắc 6 mặt cân đối'},'Xác suất cổ điển;Chương 1|Không gian mẫu 6 mặt;Biến cố: mặt chẵn|$P(A)=\\frac{|A|}{|\\Omega|}$|Đếm 3 mặt chẵn;Chia cho 6;Bẫy: nhầm với mặt lẻ hoặc số nguyên tố'),
+M('s2',1,'mcq','Vận dụng cao','Dây chuyền: máy A làm 60% sản phẩm, lỗi 2%; máy B làm 40%, lỗi 5%. Lấy ngẫu nhiên 1 sản phẩm thì thấy bị lỗi. Xác suất nó do máy B làm là?',['$0{,}25$','$0{,}5$','$0{,}625$','$0{,}75$'],2,'Dùng công thức xác suất đầy đủ rồi Bayes.','$P(L)=0{,}6\\cdot0{,}02+0{,}4\\cdot0{,}05=0{,}032$. $P(B|L)=\\frac{0{,}02}{0{,}032}=0{,}625$.','factory_3d',{p:0.032,label:'Lỗi tổng hợp 3,2%'},'Bayes;Chương 1 – dây chuyền sản xuất|$P(A)=0,6;P(B)=0,4;Lỗi A 2%, lỗi B 5%|$P(B|L)=\\frac{P(B)P(L|B)}{P(L)}$|Tính $P(L)$ trước;Rồi chia;Bẫy: lấy 5% làm đáp án'),
+M('s3',2,'mcq','Cơ bản','Biến ngẫu nhiên $X$ có $P(X=0)=0{,}3$, $P(X=1)=0{,}5$, $P(X=2)=0{,}2$. Kỳ vọng $E(X)$ bằng?',['$0{,}7$','$0{,}9$','$1{,}0$','$1{,}2$'],1,'$E(X)=\\sum x_iP_i$','$E(X)=0\\cdot0{,}3+1\\cdot0{,}5+2\\cdot0{,}2=0{,}9$.','dice_3d',{label:'Biến rời rạc 3 giá trị'},'Kỳ vọng;Chương 2|Bảng phân phối 3 giá trị|$E(X)=\\sum x_ip_i$|Nhân từng cặp;Cộng lại;Bẫy: quên giá trị 0'),
+M('s4',3,'mcq','Vận dụng','Điểm thi $X\\sim N(100,15^2)$. Xác suất $P(X>115)$ gần nhất với?',['$0{,}0228$','$0{,}1587$','$0{,}3413$','$0{,}8413$'],1,'Chuẩn hoá $Z=\\frac{X-\\mu}{\\sigma}$.','$Z=\\frac{115-100}{15}=1$ nên $P=1-\\Phi(1)=0{,}1587$.','bellcurve_3d',{mu:100,sigma:15,label:'N(100; 15²)'},'Phân phối chuẩn;Chương 3|$\\mu=100;\\sigma=15$; cần $P(X>115)$|$Z=\\frac{X-\\mu}{\\sigma}$|Chuẩn hoá;Tra bảng $\\Phi(1)$;Bẫy: quên lấy phần bù'),
+M('s5',4,'mcq','Vận dụng','Mẫu: 4, 6, 8, 10, 12. Phương sai mẫu hiệu chỉnh $s^2$ bằng?',['$8$','$10$','$12{,}5$','$40$'],1,'Chia cho $n-1$, không phải $n$.','$\\bar x=8$; $\\sum(x_i-\\bar x)^2=40$; $s^2=\\frac{40}{4}=10$.','bellcurve_3d',{mu:8,sigma:3,label:'n=5, x̄=8'},'Đặc trưng mẫu;Chương 4|$n=5$;Dữ liệu 4–12|$s^2=\\frac{\\sum(x_i-\\bar x)^2}{n-1}$|Tính trung bình;Tổng bình phương lệch;Bẫy: chia cho $n$'),
+M('s6',5,'mcq','Vận dụng cao','Đo thân nhiệt 100 bệnh nhân: $\\bar x=36{,}8$, độ lệch chuẩn tổng thể $\\sigma=0{,}5$. Khoảng tin cậy 95% cho trung bình là?',['$(36{,}70;\\,36{,}90)$','$(36{,}50;\\,37{,}10)$','$(36{,}79;\\,36{,}81)$','$(36{,}60;\\,37{,}00)$'],0,'Sai số $=z_{\\alpha/2}\\sigma/\\sqrt n$.','Sai số $=1{,}96\\cdot0{,}5/10\\approx0{,}098$ nên khoảng $(36{,}70;36{,}90)$.','medical_3d',{p:0.15,label:'n=100 bệnh nhân'},'Khoảng ước lượng;Chương 5 – y tế|$n=100;\\bar x=36,8;\\sigma=0,5$|$\\bar x\\pm z_{0,025}\\frac{\\sigma}{\\sqrt n}$|Tính sai số;Cộng trừ quanh $\\bar x$;Bẫy: quên căn $n$'),
+M('s7',6,'mcq','Vận dụng','Kiểm định $H_0:\\mu=50$, $n=36$, $\\bar x=52$, $\\sigma=6$. Thống kê kiểm định $z$ bằng?',['$1$','$2$','$3$','$12$'],1,'$z=\\frac{\\bar x-\\mu_0}{\\sigma/\\sqrt n}$','$z=\\frac{52-50}{6/6}=2$.','bellcurve_3d',{mu:50,sigma:6,label:'H0: μ=50'},'Kiểm định z;Chương 6|$\\mu_0=50;n=36;\\bar x=52$|$z=\\frac{\\bar x-\\mu_0}{\\sigma/\\sqrt n}$|Tính sai số chuẩn $=1$;Chia;So với $z_{crit}$;Bẫy: nhầm $\\sigma$ với $\\sigma/\\sqrt n$'),
+M('s8',7,'mcq','Vận dụng cao','Hai danh mục đầu tư, mỗi bên 50 phiên, $\\sigma_1=\\sigma_2=10$, lợi nhuận TB 105 và 100. Thống kê $z$ so sánh 2 trung bình?',['$1{,}25$','$2{,}5$','$5$','$0{,}5$'],1,'Sai số chuẩn $=\\sqrt{\\sigma_1^2/n_1+\\sigma_2^2/n_2}$.','$SE=\\sqrt{2+2}=2$; $z=\\frac{5}{2}=2{,}5$.','finance_3d',{mu:2.5,label:'105 vs 100'},'So sánh 2 trung bình;Chương 7 – tài chính|$n_1=n_2=50;\\sigma=10$; chênh lệch 5|$z=\\frac{\\bar x_1-\\bar x_2}{\\sqrt{\\sigma_1^2/n_1+\\sigma_2^2/n_2}}$|Tính SE;Chia;Bẫy: quên cộng hai phương sai'),
+M('s9',1,'essay','Vận dụng cao','Lô hàng 10 sản phẩm có 3 sản phẩm lỗi. Lấy ngẫu nhiên 2 sản phẩm không hoàn lại. Tính xác suất có đúng 1 sản phẩm lỗi.',[],0,'Dùng tổ hợp: chọn 1 lỗi trong 3 và 1 tốt trong 7.','$P=\\frac{C_3^1C_7^1}{C_{10}^2}=\\frac{21}{45}=\\frac{7}{15}$.','factory_3d',{p:0.3,label:'3/10 lỗi'},'Xác suất tổ hợp;Chương 1|10 sp, 3 lỗi;Lấy 2 không hoàn lại|$\\frac{C_3^1C_7^1}{C_{10}^2}$|Đếm cách thuận lợi;Chia tổng;Bẫy: nhầm có hoàn lại'),
+M('s10',3,'essay','Vận dụng','Mỗi sản phẩm lỗi với xác suất $0{,}1$ độc lập. Kiểm tra 5 sản phẩm, tính xác suất có ít nhất 1 sản phẩm lỗi.',[],0,'Dùng biến cố đối: không có sản phẩm lỗi nào.','$X\\sim B(5;0{,}1)$; $P(X\\ge1)=1-0{,}9^5\\approx0{,}4095$.','factory_3d',{p:0.1,label:'X~B(5; 0,1)'},'Phân phối nhị thức;Chương 3|$n=5;p=0,1$|$P(X\\ge1)=1-P(X=0)$|Dùng biến cố đối;Tính $0,9^5$;Bẫy: cộng 5 lần 0,1')];
+const SAMPLE_EXAM=BANK.filter(q=>q.type==='mcq');
+
+/* ===== Mô phỏng 3D (canvas, không cần thư viện) ===== */
+const rgb=(c,k)=>`rgb(${c.map(v=>Math.min(255,v*k|0))})`;
+function box(x,y,z,w,h,d,c){const a=x-w/2,b=x+w/2,z0=z-d/2,z1=z+d/2,y1=y+h;
+ return[[[[a,y1,z0],[b,y1,z0],[b,y1,z1],[a,y1,z1]],c,1.12],[[[a,y,z0],[b,y,z0],[b,y1,z0],[a,y1,z0]],c,.9],[[[a,y,z1],[b,y,z1],[b,y1,z1],[a,y1,z1]],c,.7],[[[a,y,z0],[a,y,z1],[a,y1,z1],[a,y1,z0]],c,.8],[[[b,y,z0],[b,y,z1],[b,y1,z1],[b,y1,z0]],c,.6]].map(f=>({v:f[0],col:rgb(f[1],f[2])}))}
+function scene(type,t,p){const o={polys:[],dots:[],txt:[]},hash=n=>((n*9301+49297)%233280)/233280;
+ if(type==='dice_3d'){const s=60;o.polys=box(0,-s,0,2*s,2*s,2*s,[255,236,160]);
+  [['1',[0,0,-s]],['6',[0,0,s]],['3',[-s,0,0]],['4',[s,0,0]],['2',[0,s,0]],['5',[0,-s,0]]].forEach(f=>o.txt.push({t:f[0],p:f[1]}))}
+ else if(type==='factory_3d'){const pr=p.p||.1;o.polys=box(0,-16,0,460,16,80,[130,130,160]);
+  for(let k=0;k<8;k++){const u=k*60+t*50,id=k+8*Math.floor(u/480),x=(u%480)-240,bad=hash(id+1)<pr*2.2;
+   o.polys.push(...box(x,0,0,32,28,32,bad?[255,120,130]:[120,225,175]))}
+  o.polys.push(...box(0,0,-44,6,70,6,[255,220,90]),...box(0,0,44,6,70,6,[255,220,90]),...box(0,64,0,6,6,94,[255,220,90]));
+  o.beam=true}
+ else if(type==='bellcurve_3d'){const s=Math.max(.3,(p.sigma||15)/15);
+  for(let i=-6;i<=6;i++)for(let j=-3;j<=3;j++){const h=(150/Math.sqrt(s))*Math.exp(-i*i/(8*s*s))*Math.exp(-j*j/6)*(1+.08*Math.sin(t*3+i+j))+4,k=Math.min(1,h/150);
+   o.polys.push(...box(i*26,0,j*26,22,h,22,[180-70*k|0,150+80*k|0,255-60*k|0]))}}
+ else if(type==='medical_3d'){const pr=p.p||.2;for(let k=0;k<70;k++){const y=1-2*k/69,r=Math.sqrt(1-y*y),a=k*2.4+t*.5;
+   o.dots.push({p:[95*r*Math.cos(a),95*y,95*r*Math.sin(a)],r:8,c:hash(k+3)<pr?'#FF7A8A':'#8FF0C8'})}}
+ else{for(let i=0;i<12;i++){const h=(40+90*Math.abs(Math.sin(i*1.3+1)))*(1+.1*Math.sin(t*2+i))+(p.mu||0)*i*3,up=i%3!==0;
+   o.polys.push(...box(i*34-187,0,0,26,h,40,up?[120,225,175]:[255,150,160]))}}
+ return o}
+function draw(c,dt){const g=c.getContext('2d'),q=QM[c.dataset.q];if(!q)return;if(c.__run!==false)c.__t=(c.__t||0)+dt;const t=c.__t||0,W=c.width,H=c.height;
+ const sc=scene(q.viz,t,q.vp||{}),ry=(c.__ry||0)+(q.viz==='dice_3d'?t*.8:Math.sin(t*.4)*.5+.4),rx=.5;
+ const P=v=>{let[x,y,z]=v,co=Math.cos(ry),si=Math.sin(ry);[x,z]=[x*co+z*si,-x*si+z*co];co=Math.cos(rx);si=Math.sin(rx);[y,z]=[y*co+z*si,-y*si+z*co];const f=420/(420+z);return[W/2+x*f,H*.62-y*f,z,f]};
+ const items=[];
+ sc.polys.forEach(f=>{const pp=f.v.map(P);items.push({z:pp.reduce((s,a)=>s+a[2],0)/4,fn:()=>{g.beginPath();pp.forEach((a,i)=>i?g.lineTo(a[0],a[1]):g.moveTo(a[0],a[1]));g.closePath();g.fillStyle=f.col;g.fill();g.strokeStyle='rgba(45,42,74,.6)';g.stroke()}})});
+ sc.dots.forEach(d=>{const a=P(d.p);items.push({z:a[2],fn:()=>{g.beginPath();g.arc(a[0],a[1],d.r*a[3],0,7);g.fillStyle=d.c;g.fill()}})});
+ sc.txt.forEach(d=>{const a=P(d.p);items.push({z:a[2]-1,fn:()=>{g.fillStyle='#2D2A4A';g.font='900 34px Nunito';g.textAlign='center';g.fillText(d.t,a[0],a[1]+12)}})});
+ g.clearRect(0,0,W,H);items.sort((a,b)=>b.z-a.z).forEach(i=>i.fn());
+ g.fillStyle='#fff';g.font='800 14px Nunito';g.textAlign='left';g.fillText('🎲 '+(q.vp&&q.vp.label||'Mô phỏng')+' · kéo chuột để xoay',10,H-10)}
+let lastT=performance.now();
+function loop(n){const dt=Math.min(.05,(n-lastT)/1000);lastT=n;document.querySelectorAll('canvas.sc').forEach(c=>{try{draw(c,dt)}catch(e){}});requestAnimationFrame(loop)}
+requestAnimationFrame(loop);
+let drag=null;
+document.addEventListener('pointerdown',e=>{if(e.target.classList&&e.target.classList.contains('sc'))drag={c:e.target,x:e.clientX}});
+addEventListener('pointermove',e=>{if(drag){drag.c.__ry=(drag.c.__ry||0)+(e.clientX-drag.x)*.01;drag.x=e.clientX}});
+addEventListener('pointerup',()=>drag=null);
+function runT(id){const c=document.querySelector(`canvas[data-q="${id}"]`);if(!c)return;c.__run=c.__run===false;c.__t=c.__run?0:c.__t;U(id).run=c.__run;document.getElementById('rb_'+id).textContent=c.__run?'⏸ Dừng':'▶ Chạy mô phỏng 3D'}
+
+/* ===== Thẻ câu hỏi (dùng cho Luyện tập & Chữa bài) ===== */
+const QM={};
+const LB=['A','B','C','D'];
+function qaHTML(q,mode){const u=U(q.id),rev=mode==='r',pk=rev?ST.ex.ans[q.id]:u.pick,shown=rev||(u.pick!=null);
+ let h=`<div class="font-bold text-lg my-2">${q.q}</div>`;
+ if(q.type==='mcq'){q.opts.forEach((o,i)=>{let c='opt';if(shown){if(i===q.ans)c+=' ok';else if(i===pk)c+=' bad'}
+  h+=`<button class="${c}" ${shown?'disabled':''} onclick="pick('${q.id}',${i})"><b>${LB[i]}.</b> ${o}</button>`});
+  if(shown)h+=`<div class="font-black my-2">${pk===q.ans?'🎉 Chuẩn luôn! Đúng rồi!':pk==null?'⏰ Bạn chưa chọn đáp án – đáp án đúng là '+LB[q.ans]:'💔 Chưa đúng – đáp án đúng là '+LB[q.ans]}</div>`}
+ else{h+=`<textarea class="w-full" rows="4" placeholder="Viết bài giải của bạn (có thể dùng $công thức$)..." oninput="U('${q.id}').essay=this.value">${esc(u.essay||'')}</textarea>
+  <button class="bt mt-2" onclick="grade('${q.id}')">✍️ Nhờ Cú Đêm chấm bài</button>${u.grade?`<div class="pc p-3 mt-3 bg-[#EFFFF8]">${u.grade}</div>`:''}`}
+ h+=`<div class="flex gap-2 flex-wrap mt-2">`;
+ if(!rev)h+=`<button class="bt" onclick="U('${q.id}').hint=1;updQ('${q.id}','${mode}')">💡 Gợi ý nhẹ</button><button class="bt" onclick="U('${q.id}').sol=!U('${q.id}').sol;updQ('${q.id}','${mode}')">📖 Lời giải chi tiết</button>`;
+ h+=`</div>`;
+ if(u.hint&&!rev)h+=`<div class="mt-2 p-3 rounded-2xl bg-[#FFF1B8] border-2 border-[#2D2A4A]">💡 ${q.hint}</div>`;
+ if(rev||u.sol)h+=`<div class="mt-2 p-3 rounded-2xl bg-[#E9DDFF] border-2 border-[#2D2A4A]"><b>📖 Lời giải:</b> ${q.sol}</div>`;
+ return h}
+function qcard(q,mode,num){QM[q.id]=q;const id=q.id;
+ return`<div class="pc p-4 my-4" id="c_${id}"><div class="flex gap-2 flex-wrap items-center"><span class="tag bg-[#D9C9FF]">${num?'Câu '+num+' · ':''}Chương ${q.ch}</span><span class="tag bg-[#FFD2D0]">${q.lv}</span><span class="tag bg-[#BFF1DC]">${q.type==='mcq'?'Trắc nghiệm':'Tự luận'}</span></div>
+ <div class="grid md:grid-cols-5 gap-3 mt-2"><div class="md:col-span-3"><div id="qa_${id}">${qaHTML(q,mode)}</div></div>
+ <div class="md:col-span-2"><div class="stage"><canvas class="sc" data-q="${id}" width="560" height="360"></canvas><button id="rb_${id}" class="bt" onclick="runT('${id}')">⏸ Dừng</button></div></div></div>
+ <div class="mt-3 p-3 rounded-2xl bg-[#F3EEFF] border-2 border-dashed border-[#2D2A4A]"><b>🛟 Gỡ rối tức thì cho câu hỏi này</b>
+ <div class="flex gap-2 flex-wrap mt-2"><button class="bt" onclick="togMind('${id}')">🧠 ${mode==='r'?'Xem Bản đồ tư duy câu này':'Bản đồ tư duy bài toán này'}</button><button class="bt" onclick="togChat('${id}')">💬 ${mode==='r'?'Vấn đáp với Cú Đêm về câu này':'Vấn đáp trực tiếp câu này cùng Cú Đêm'}</button></div>
+ <div id="mm_${id}"></div><div id="ch_${id}"></div></div></div>`}
+function updQ(id,mode){const q=QM[id];$('#qa_'+id).innerHTML=qaHTML(q,mode);tx()}
+function pick(id,i){const q=QM[id];U(id).pick=i;if(i===q.ans)markDone(id);updQ(id,'p')}
+async function grade(id){const q=QM[id],u=U(id);if(!u.essay)return toast('Bạn viết bài giải trước nhé ✍️');
+ if(!KEY){u.grade='🦉 Chưa có API Key nên Cú Đêm chưa chấm được. Hãy tự so với lời giải mẫu nhé!<br><b>Lời giải mẫu:</b> '+q.sol;u.sol=1;return updQ(id,'p')}
+ u.grade='🦉 Cú Đêm đang chấm...';updQ(id,'p');
+ try{u.grade=(await ai(`Đề: ${q.q}\nĐáp án/lời giải mẫu: ${q.sol}\nBài làm sinh viên: ${u.essay}\nChấm thang 10, nhận xét ngắn gọn thân thiện, chỉ ra lỗi sai. Dùng LaTeX $...$.`,'Bạn là Cú Đêm, trợ giảng Gen Z dễ thương.')).replace(/\n/g,'<br>');if(u.grade.length>40)markDone(id)}catch(e){u.grade='Lỗi: '+esc(e.message)}
+ updQ(id,'p')}
+const LBL=[['📌 Dạng toán','#D9C9FF'],['📋 Dữ kiện đề cho','#BFF1DC'],['🧮 Công thức cốt lõi','#FFD2D0'],['🪜 Các bước giải & ⚠️ Bẫy hay sai','#FFF1B8']];
+function mmHTML(q){const parts=q.m.split('|');return`<div class="mm text-center mt-3"><div class="root">🧠 Chương ${q.ch}: ${CH[q.ch-1]}</div><div class="grid md:grid-cols-4 gap-3 mt-3 text-left">${parts.slice(0,4).map((p,i)=>`<div class="br" style="background:${LBL[i][1]}"><b>${LBL[i][0]}</b><ul>${p.split(';').map(s=>`<li>${s.trim()}</li>`).join('')}</ul></div>`).join('')}</div></div>`}
+async function togMind(id){const q=QM[id],u=U(id),el=$('#mm_'+id);if(u.mind){u.mind=0;el.innerHTML='';return}
+ if(!q.m){if(!KEY)return toast('Cần nhập API Key để Cú Đêm vẽ bản đồ cho bài này 🦉');el.innerHTML='<p class="mt-2">🦉 Đang vẽ bản đồ...</p>';
+  try{q.m=(await ai(`Đề: ${q.q}\nLời giải: ${q.sol}\nTrả về DUY NHẤT một chuỗi gồm 4 nhóm cách nhau bởi dấu |: Dạng toán|Dữ kiện đề cho|Công thức cốt lõi|Các bước giải;Bẫy hay sai. Ý trong nhóm cách nhau bởi dấu ;. LaTeX dùng $...$.`)).replace(/\n/g,' ').trim()}catch(e){el.innerHTML='';return toast('Lỗi: '+e.message)}}
+ u.mind=1;el.innerHTML=mmHTML(q);tx()}
+function chatHTML(id){const u=U(id);return`<div class="mt-3 bg-white rounded-2xl border-2 border-[#2D2A4A] p-3"><div class="max-h-72 overflow-y-auto" id="msgs_${id}">${u.msgs.map(m=>`<div class="my-1 ${m.r==='u'?'text-right':''}"><span class="inline-block px-3 py-1 rounded-2xl border-2 border-[#2D2A4A] ${m.r==='u'?'bg-[#BFF1DC]':'bg-[#F3EEFF]'}">${m.r==='u'?'':'🦉 '}${m.t}</span></div>`).join('')}</div>
+ <div class="flex gap-2 mt-2"><input id="in_${id}" class="flex-1" placeholder="Hỏi Cú Đêm: vì sao câu này dùng công thức đó?" onkeydown="if(event.key==='Enter')send('${id}')"><button class="bt" onclick="send('${id}')">Gửi</button></div></div>`}
+function togChat(id){const u=U(id),el=$('#ch_'+id);if(u.chat){u.chat=0;el.innerHTML='';return}u.chat=1;
+ if(!u.msgs.length)u.msgs.push({r:'m',t:'Chào bạn! Mình đã nắm đề và đáp án câu này rồi. Bạn đang kẹt ở bước nào, hay muốn mình hỏi gợi mở nhé? 🦉'});el.innerHTML=chatHTML(id);tx()}
+async function send(id){const q=QM[id],u=U(id),inp=$('#in_'+id),v=inp.value.trim();if(!v)return;u.msgs.push({r:'u',t:esc(v)});u.msgs.push({r:'m',t:'...'});$('#ch_'+id).innerHTML=chatHTML(id);let rep;
+ try{const hist=u.msgs.slice(0,-1).map(m=>({role:m.r==='u'?'user':'model',parts:[{text:m.t}]})).filter((m,i)=>!(i===0&&m.role==='model'));
+  rep=(await ai(hist,`Bạn là Cú Đêm, trợ giảng Xác suất Thống kê Gen Z, thân thiện. Phương pháp Socratic: đặt câu hỏi gợi mở, không tiết lộ đáp án ngay nếu sinh viên chưa thử. Trả lời tiếng Việt, ngắn gọn, LaTeX $...$.\nĐề: ${q.q}\nLựa chọn: ${(q.opts||[]).join(' | ')}\nĐáp án đúng: ${q.type==='mcq'?LB[q.ans]:'(tự luận)'}\nLời giải: ${q.sol}`)).replace(/\n/g,'<br>')}
+ catch(e){rep=e.message==='nokey'?`Gợi ý từ Cú: ${q.hint} Bạn thử liệt kê dữ kiện đề cho và công thức cần dùng xem? (Nhập API Key để chat tự do nhé!)`:'Lỗi: '+esc(e.message)}
+ u.msgs[u.msgs.length-1]={r:'m',t:rep};$('#ch_'+id).innerHTML=chatHTML(id);const m=$('#msgs_'+id);m.scrollTop=m.scrollHeight;tx()}
+
+/* ===== Điều hướng & màn hình ===== */
+function go(v){clearInterval(ST.timer);ST.view=v;if(v==='exam'&&!(ST.ex&&!ST.ex.done))ST.ex=null;render()}
+function render(){const a=$('#app');$('#homeBtn').classList.toggle('hidden',ST.view==='home');({home:rHome,practice:rPractice,exam:rExam})[ST.view](a);scrollTo(0,0);tx()}
+function rHome(a){a.innerHTML=`<section class="pc p-5 flex flex-wrap items-center gap-4 bg-white"><div class="float">${owl(150)}</div><div class="flex-1 min-w-[220px]"><div class="inline-block pc px-3 py-1 text-sm mb-2" style="box-shadow:0 3px 0 #2D2A4A">👋 Chào cậu! Hôm nay mình cùng cứu nét kiến thức nhé!</div>
+<h1 class="text-3xl md:text-4xl font-black">Xác suất &amp; Thống kê không đáng sợ, có Cú Đêm lo!</h1><p class="mt-1 font-bold">Luyện từng chút, thi thử thật chăm – điểm số sẽ nở hoa 🌸</p>
+<div class="flex gap-3 mt-3 flex-wrap"><span class="tag bg-[#BFF1DC] py-1 text-base">🏆 ${prog.done.length} bài đã chinh phục</span><span class="tag bg-[#FFD2D0] py-1 text-base">🔥 ${prog.streak} ngày chăm học</span></div></div></section>
+<div class="grid md:grid-cols-2 gap-6 mt-8">
+<button onclick="go('practice')" class="pc p-5 text-left bt" style="background:linear-gradient(135deg,#D9C9FF,#BFF1DC);border-radius:1.5rem;box-shadow:0 8px 0 #2D2A4A"><svg viewBox="0 0 120 70" class="w-28"><polygon points="60,6 100,26 60,46 20,26" fill="#FFF1B8" stroke="#2D2A4A" stroke-width="3"/><polygon points="20,26 60,46 60,66 20,46" fill="#FFD2D0" stroke="#2D2A4A" stroke-width="3"/><polygon points="100,26 60,46 60,66 100,46" fill="#BFF1DC" stroke="#2D2A4A" stroke-width="3"/></svg>
+<h2 class="text-2xl font-black mt-2">🎯 Khu Luyện Tập Chủ Động</h2><p class="font-bold mt-1">Luyện bài tập Trắc nghiệm &amp; Tự luận thực tế qua 7 chương, có mô phỏng 3D, Bản đồ tư duy và Vấn đáp trực tiếp tại từng câu.</p></button>
+<button onclick="go('exam')" class="pc p-5 text-left bt" style="background:linear-gradient(135deg,#FFD2D0,#FFF1B8);border-radius:1.5rem;box-shadow:0 8px 0 #2D2A4A"><svg viewBox="0 0 120 70" class="w-28"><circle cx="60" cy="38" r="28" fill="#fff" stroke="#2D2A4A" stroke-width="4"/><line x1="60" y1="38" x2="60" y2="18" stroke="#2D2A4A" stroke-width="4"/><line x1="60" y1="38" x2="74" y2="46" stroke="#FF7A8A" stroke-width="4"/><rect x="52" y="4" width="16" height="6" rx="2" fill="#2D2A4A"/></svg>
+<h2 class="text-2xl font-black mt-2">⏰ Đấu Trường Thi Thử</h2><p class="font-bold mt-1">Thi thử bấm giờ như thi thật, chấm điểm tự động và mở khóa Bản đồ tư duy + Vấn đáp giải đáp thắc mắc ngay sau khi nộp bài.</p></button></div>`}
+function pList(){let l=[...BANK,...ST.gen].filter(q=>q.ch===ST.ch&&(ST.type==='all'||q.type===ST.type)&&(ST.lv==='all'||q.lv===ST.lv));
+ $('#plist').innerHTML=l.length?l.map(q=>qcard(q,'p')).join(''):'<div class="pc p-5 mt-4 text-center">🦉 Chưa có bài mẫu cho bộ lọc này. Bấm “Tạo bài toán mới bằng AI” nhé!</div>';tx()}
+function rPractice(a){a.innerHTML=`<button class="bt mb-3" onclick="go('home')">← Quay lại Trang chủ</button><div class="pc p-4"><h2 class="text-2xl font-black mb-2">🎯 Khu Luyện Tập</h2>
+<div class="flex flex-wrap gap-2">${CH.map((c,i)=>`<button class="bt text-sm ${ST.ch===i+1?'on':''}" title="${c}" onclick="ST.ch=${i+1};render()">Chương ${i+1}</button>`).join('')}</div><p class="font-bold mt-2">${CH[ST.ch-1]}</p>
+<div class="flex flex-wrap gap-2 mt-2"><select onchange="ST.type=this.value;pList()"><option value="all">Mọi hình thức</option><option value="mcq" ${ST.type==='mcq'?'selected':''}>Trắc nghiệm</option><option value="essay" ${ST.type==='essay'?'selected':''}>Tự luận</option></select>
+<select onchange="ST.lv=this.value;pList()"><option value="all">Mọi độ khó</option>${['Cơ bản','Vận dụng','Vận dụng cao'].map(l=>`<option ${ST.lv===l?'selected':''}>${l}</option>`).join('')}</select><button class="bt" id="gbtn" onclick="genP()">✨ Tạo bài toán mới bằng AI</button></div></div><div id="plist"></div>`;pList()}
+async function genP(){if(!KEY)return toast('Nhập Gemini API Key ở trên để tạo bài mới nha 🦉');const b=$('#gbtn');b.disabled=true;b.textContent='🦉 Đang nghĩ đề...';
+ try{ST.gen.push(...await genAI({ch:ST.ch,type:ST.type==='all'?'mcq':ST.type,lv:ST.lv==='all'?'Vận dụng':ST.lv},2));toast('Có bài mới rồi nè!')}catch(e){toast('Lỗi: '+e.message)}pList();b.disabled=false;b.textContent='✨ Tạo bài toán mới bằng AI'}
+
+/* ===== Thi thử ===== */
+function rExam(a){const e=ST.ex;if(!e)return cfgExam(a);if(e.done)return resExam(a);
+ a.innerHTML=`<div class="pc p-3 sticky top-16 z-20 flex flex-wrap items-center gap-2"><b class="text-2xl">⏰ <span id="clk">--:--</span></b><div class="flex gap-1 flex-wrap flex-1">${e.qs.map((q,i)=>`<button id="nv_${i}" class="bt text-sm" onclick="document.getElementById('eq_${i}').scrollIntoView({behavior:'smooth'})">${i+1}</button>`).join('')}</div><button class="bt bg-[#BFF1DC]" onclick="submitEx()">📨 Nộp bài</button></div>`+
+ e.qs.map((q,i)=>{QM[q.id]=q;return`<div class="pc p-4 my-4" id="eq_${i}">${exQ(q,i)}</div>`}).join('');
+ clearInterval(ST.timer);const tick=()=>{const s=Math.max(0,e.end-Date.now())/1000|0;const c=$('#clk');if(c)c.textContent=String(s/60|0).padStart(2,'0')+':'+String(s%60).padStart(2,'0');if(s<=0)submitEx()};tick();ST.timer=setInterval(tick,500);tx()}
+function exQ(q,i){const a=ST.ex.ans[q.id];return`<span class="tag bg-[#D9C9FF]">Câu ${i+1} · Chương ${q.ch}</span><div class="font-bold text-lg my-2">${q.q}</div>`+q.opts.map((o,k)=>`<button class="opt ${a===k?'sel':''}" onclick="exPick(${i},${k})"><b>${LB[k]}.</b> ${o}</button>`).join('')}
+function exPick(i,k){const q=ST.ex.qs[i];ST.ex.ans[q.id]=k;$('#eq_'+i).innerHTML=exQ(q,i);$('#nv_'+i).classList.add('on');tx()}
+function cfgExam(a){const c=ST.cfg,ch=(k,v,l)=>`<button class="bt ${c[k]==v?'on':''}" onclick="ST.cfg.${k}=${JSON.stringify(v)};render()">${l}</button>`;
+ a.innerHTML=`<button class="bt mb-3" onclick="go('home')">← Quay lại Trang chủ</button><div class="pc p-5"><h2 class="text-2xl font-black">⏰ Đấu Trường Thi Thử</h2><p class="font-bold mt-3">Phạm vi</p><div class="flex flex-wrap gap-2">${ch('scope','all','Tổng hợp 7 chương')}${CH.map((_,i)=>ch('scope',i+1,'Chương '+(i+1))).join('')}</div>
+<p class="font-bold mt-3">Số câu</p><div class="flex gap-2">${ch('n',5,'5 câu')}${ch('n',10,'10 câu')}</div><p class="font-bold mt-3">Thời gian</p><div class="flex gap-2">${[10,15,30].map(m=>ch('min',m,m+' phút')).join('')}</div>
+<div class="flex flex-wrap gap-3 mt-5"><button class="bt" onclick="startEx(false)">📚 Thi thử Đề Mẫu có sẵn</button><button class="bt" id="xbtn" onclick="startEx(true)">✨ Tạo Đề Thi mới bằng AI</button></div><p class="text-sm mt-3">Đề mẫu có 8 câu trắc nghiệm (mỗi chương ít nhất 1 câu). Đề AI tạo đúng số câu bạn chọn.</p></div>`}
+async function startEx(useAI){const c=ST.cfg;let qs;
+ if(useAI){if(!KEY)return toast('Nhập Gemini API Key để Cú Đêm ra đề nha 🦉');const b=$('#xbtn');b.disabled=true;b.textContent='🦉 Đang ra đề...';
+  try{qs=await genAI({ch:c.scope==='all'?0:c.scope,type:'mcq',lv:'Vận dụng'},c.n);qs=qs.filter(q=>q.type==='mcq'&&q.opts.length>=2)}catch(e){toast('Lỗi: '+e.message);return render()}}
+ else qs=SAMPLE_EXAM.filter(q=>c.scope==='all'||q.ch===c.scope).slice(0,c.n);
+ if(!qs.length)return toast('Chưa có câu nào – hãy thử Tạo đề bằng AI');
+ ST.ex={qs,ans:{},done:false,end:Date.now()+c.min*60000};render()}
+function submitEx(){const e=ST.ex;if(!e||e.done)return;clearInterval(ST.timer);e.done=true;e.ok=e.qs.filter(q=>{const r=e.ans[q.id]===q.ans;if(r)markDone(q.id);return r}).length;render()}
+function resExam(a){const e=ST.ex,n=e.qs.length,sc=(e.ok/n*10).toFixed(1),cm=sc>=8?'Quá đỉnh luôn! Cú Đêm tự hào về cậu 🎉':sc>=5?'Khá ổn rồi, xem lại câu sai là lên hạng ngay nha 💪':'Không sao đâu, mình cùng gỡ rối từng câu nhé 🦉';
+ a.innerHTML=`<div class="pc p-5 flex flex-wrap items-center gap-4"><div class="float">${owl(120)}</div><div><h2 class="text-3xl font-black">Điểm: ${sc}/10</h2><p class="font-bold">Đúng ${e.ok}/${n} câu</p><p class="mt-1">${cm}</p></div><button class="bt ml-auto" onclick="ST.ex=null;render()">🔁 Thi lại</button></div><h3 class="text-xl font-black mt-6">📝 Chữa chi tiết từng câu</h3>`+e.qs.map((q,i)=>qcard(q,'r',i+1)).join('')}
+
+/* ===== Khởi động ===== */
+(function(){const c=ls.get('cfg',{});KEY=c.k||'';MODEL=c.m||MODEL;$('#key').value=KEY;$('#model').value=MODEL;render()})();
+</script>
+</body>
+</html>
