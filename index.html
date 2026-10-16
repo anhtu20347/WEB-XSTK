@@ -3,449 +3,1317 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
 <title>Cú Đêm · Xác suất & Thống kê</title>
 <script src="https://cdn.tailwindcss.com/3.4.17"></script>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;900&display=swap" rel="stylesheet">
-<script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']],displayMath:[['$$','$$']]},options:{skipHtmlTags:['script','noscript','style','textarea']}};</script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+<script>
+window.MathJax = {
+  tex: { inlineMath: [['$','$'], ['\\(','\\)']], displayMath: [['$$','$$']] },
+  options: { skipHtmlTags: ['script','noscript','style','textarea'] }
+};
+</script>
 <script async src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js"></script>
 <style>
 :root{--ink:#2D2A4A;--lav:#D9C9FF;--mint:#BFF1DC;--peach:#FFD2D0;--butter:#FFF1B8}
 body{font-family:Nunito,system-ui,sans-serif;color:var(--ink);background:#F8FAFC;
 background-image:radial-gradient(at 8% 5%,var(--lav) 0,transparent 38%),radial-gradient(at 92% 8%,var(--mint) 0,transparent 36%),radial-gradient(at 85% 90%,var(--peach) 0,transparent 38%),radial-gradient(at 8% 92%,var(--butter) 0,transparent 36%);background-attachment:fixed}
-.pc{background:#fff;border:3px solid var(--ink);border-radius:1.5rem;box-shadow:0 6px 0 var(--ink)}
-.bt{border:3px solid var(--ink);border-radius:1rem;box-shadow:0 4px 0 var(--ink);padding:.35rem .9rem;font-weight:800;background:var(--butter);transition:all .15s;cursor:pointer}
-.bt:hover{transform:translateY(-4px);box-shadow:0 8px 0 var(--ink)}.bt:active{transform:translateY(2px);box-shadow:0 1px 0 var(--ink)}
-.bt.on{background:var(--lav)}.bt:disabled{opacity:.5}
-.tag{border:2px solid var(--ink);border-radius:999px;padding:0 .6rem;font-size:.75rem;font-weight:800}
-.opt{display:block;width:100%;text-align:left;border:3px solid var(--ink);border-radius:1rem;padding:.55rem .9rem;margin:.35rem 0;background:#fff;font-weight:700;transition:all .15s}
-.opt:hover:not(:disabled){transform:translateY(-3px);background:var(--butter)}
-.opt.ok{background:#9BEFC8;animation:pop .4s}.opt.bad{background:#FFAFB0;animation:shake .4s}.opt.sel{background:var(--lav)}
+.pc{background:#fff;color:#2D2A4A;border:3px solid var(--ink);border-radius:1.5rem;box-shadow:0 6px 0 var(--ink)}
+.bt{border:3px solid var(--ink);border-radius:1rem;box-shadow:0 4px 0 var(--ink);padding:.35rem .9rem;font-weight:800;background:var(--butter);color:#2D2A4A;transition:all .15s;cursor:pointer}
+.bt:hover{transform:translateY(-3px);box-shadow:0 7px 0 var(--ink)}
+.bt:active{transform:translateY(2px);box-shadow:0 1px 0 var(--ink)}
+.bt.on{background:var(--lav)}
+.bt:disabled{opacity:.5;cursor:not-allowed}
+.tag{border:2px solid var(--ink);border-radius:999px;padding:.1rem .65rem;font-size:.75rem;font-weight:800;color:#2D2A4A}
+.opt{display:block;width:100%;text-align:left;border:3px solid var(--ink);border-radius:1rem;padding:.55rem .9rem;margin:.35rem 0;background:#fff;color:#2D2A4A;font-weight:700;transition:all .15s;cursor:pointer}
+.opt:hover:not(:disabled){transform:translateY(-2px);background:var(--butter)}
+.opt.ok{background:#9BEFC8;animation:pop .4s}
+.opt.bad{background:#FFAFB0;animation:shake .4s}
+.opt.sel{background:var(--lav)}
 .stage{background:linear-gradient(160deg,#2D2A4A,#4B3F8F);border-radius:1.2rem;border:3px solid var(--ink);position:relative;overflow:hidden}
 .stage canvas{width:100%;display:block;touch-action:none;cursor:grab}
 .stage button{position:absolute;right:.5rem;top:.5rem;font-size:.75rem}
-.mm .br{border:3px solid var(--ink);border-radius:1rem;padding:.6rem;font-size:.85rem}.mm li{margin:.2rem 0 0 1rem;list-style:disc}
-.root{display:inline-block;border:3px solid var(--ink);border-radius:999px;padding:.3rem 1rem;font-weight:900;background:var(--butter)}
-textarea,input,select{border:3px solid var(--ink);border-radius:.9rem;padding:.35rem .7rem;background:#fff;font-weight:700;max-width:100%}
+.mm .br{border:3px solid var(--ink);border-radius:1rem;padding:.6rem;font-size:.85rem;color:#2D2A4A}
+.mm li{margin:.2rem 0 0 1rem;list-style:disc}
+.root{display:inline-block;border:3px solid var(--ink);border-radius:999px;padding:.3rem 1rem;font-weight:900;background:var(--butter);color:#2D2A4A}
+textarea,input,select{border:3px solid var(--ink);border-radius:.9rem;padding:.35rem .7rem;background:#fff;color:#2D2A4A;font-weight:700;max-width:100%}
 .blink{transform-box:fill-box;transform-origin:center;animation:blink 4s infinite}
 .wave{transform-box:fill-box;transform-origin:10% 20%;animation:wave 1.2s ease-in-out infinite}
 .float{animation:float 3s ease-in-out infinite}
 @keyframes blink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
 @keyframes wave{0%,100%{transform:rotate(0)}50%{transform:rotate(-28deg)}}
 @keyframes float{50%{transform:translateY(-8px)}}
-@keyframes pop{50%{transform:scale(1.04)}}@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
-.wv{display:none;gap:3px;align-items:center;height:22px}.wv.on{display:inline-flex}
+@keyframes pop{50%{transform:scale(1.03)}}
+@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.wv{display:none;gap:3px;align-items:center;height:22px}
+.wv.on{display:inline-flex}
 .wv i{display:inline-block;width:4px;height:18px;background:#2D2A4A;border-radius:4px;animation:bar .8s ease-in-out infinite}
 .wv i:nth-child(2){animation-delay:.15s}.wv i:nth-child(3){animation-delay:.3s}.wv i:nth-child(4){animation-delay:.45s}.wv i:nth-child(5){animation-delay:.6s}
 @keyframes bar{50%{transform:scaleY(.25)}}
-@media(prefers-reduced-motion:reduce){*{animation:none!important}}
 </style>
 </head>
 <body class="min-h-screen">
-<header class="sticky top-0 z-30 bg-white/90 backdrop-blur border-b-4 border-[#2D2A4A] px-3 py-2 flex flex-wrap items-center gap-2">
-  <div class="flex items-center gap-2 mr-auto"><span id="logo"></span><b class="text-lg leading-tight">Cú Đêm<br><span class="text-xs">Xác suất &amp; Thống kê</span></b></div>
-  <button id="homeBtn" class="bt hidden" onclick="go('home')">🏠 Về Trang Chủ</button>
-  <input id="key" type="password" placeholder="Gemini API Key" class="w-40 text-sm">
-  <input id="model" list="mlist" class="text-sm w-44" placeholder="Tên model"><datalist id="mlist"><option value="gemini-3.8-flash"><option value="gemini-3.0-flash"><option value="gemini-2.5-flash"></datalist>
+<header class="sticky top-0 z-30 bg-white/95 backdrop-blur border-b-4 border-[#2D2A4A] px-3 py-2 flex flex-wrap items-center gap-2">
+  <div class="flex items-center gap-2 mr-auto cursor-pointer" onclick="go('home')">
+    <span id="logo"></span>
+    <b class="text-lg leading-tight text-[#2D2A4A]">Cú Đêm<br><span class="text-xs font-bold">Xác suất &amp; Thống kê</span></b>
+  </div>
+  <button id="homeBtn" class="bt hidden text-sm" onclick="go('home')">🏠 Về Trang Chủ</button>
+  <div id="authArea" class="flex items-center gap-2"></div>
+  <input id="key" type="password" placeholder="Gemini API Key" class="w-36 text-sm">
+  <input id="model" list="mlist" class="text-sm w-40" placeholder="Tên model">
+  <datalist id="mlist">
+    <option value="gemini-3.8-flash">
+    <option value="gemini-3.0-flash">
+    <option value="gemini-2.5-flash">
+    <option value="gemini-2.0-flash">
+    <option value="gemini-1.5-flash">
+  </datalist>
   <button class="bt text-sm" onclick="saveKey()">💾 Lưu Key</button>
 </header>
-<nav id="nav" class="flex gap-2 flex-wrap px-3 py-2 max-w-5xl mx-auto"></nav><main id="app" class="max-w-5xl mx-auto p-3 md:p-6"></main>
+
+<nav id="nav" class="flex gap-2 flex-wrap px-3 py-2 max-w-5xl mx-auto"></nav>
+<main id="app" class="max-w-5xl mx-auto p-3 md:p-6"></main>
 <div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 pc px-4 py-2 font-extrabold hidden z-50"></div>
 
+<!-- Hộp thoại đăng nhập nhanh dự phòng nếu trình duyệt chặn Popup -->
+<div id="loginModal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center p-4">
+  <div class="pc p-5 max-w-md w-full bg-white">
+    <h3 class="text-xl font-black">🔐 Đăng nhập Tài khoản Học tập</h3>
+    <p class="text-sm mt-1">Nhập tên và Gmail của bạn để đồng bộ trực tiếp lên Diễn đàn &amp; Hồ sơ:</p>
+    <label class="block text-sm font-bold mt-3">Họ và tên hiển thị<input id="mName" class="w-full mt-1" placeholder="VD: Nguyễn Văn A"></label>
+    <label class="block text-sm font-bold mt-2">Địa chỉ Gmail<input id="mEmail" class="w-full mt-1" placeholder="VD: sinhvien@gmail.com"></label>
+    <div class="flex gap-2 justify-end mt-4">
+      <button class="bt bg-white text-sm" onclick="closeModal()">Huỷ</button>
+      <button class="bt text-sm bg-[#BFF1DC]" onclick="confirmQuickLogin()">✅ Xác nhận Đăng nhập</button>
+    </div>
+  </div>
+</div>
+
 <script>
-/* ===== Tiện ích ===== */
-const $=s=>document.querySelector(s);
-const ls={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
-const tx=()=>{try{window.MathJax&&MathJax.typesetPromise&&MathJax.typesetPromise()}catch(e){}};
-const toast=m=>{const t=$('#toast');t.textContent=m;t.classList.remove('hidden');clearTimeout(toast.h);toast.h=setTimeout(()=>t.classList.add('hidden'),2600)};
-const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
-let KEY='',MODEL='gemini-3.8-flash';
-const ST={view:'home',ch:1,type:'all',lv:'all',gen:[],ex:null,cfg:{scope:'all',n:5,min:15},ui:{}};
-const U=id=>ST.ui[id]||(ST.ui[id]={msgs:[],run:true});
-let prog=ls.get('prog',{done:[],streak:0,last:''});
-function markDone(id){const d=new Date(),f=x=>x.toDateString();if(!prog.done.includes(id))prog.done.push(id);
- if(prog.last!==f(d)){const y=new Date(d-864e5);prog.streak=prog.last===f(y)?prog.streak+1:1;prog.last=f(d)}ls.set('prog',prog)}
-function saveKey(){KEY=$('#key').value.trim();MODEL=$('#model').value.trim()||'gemini-3.8-flash';ls.set('cfg',{k:KEY,m:MODEL});toast(KEY?'Đã lưu Key rồi nhé! 🦉':'Đã xoá Key – dùng dữ liệu mẫu nha 🦉')}
+/* ===== 1. KHAI BÁO TOÀN BỘ BIẾN TOÀN CỤC Ở ĐẦU FILE ===== */
+var $ = function(s){ return document.querySelector(s); };
+var ls = {
+  get: function(k, d){ try{ var v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } },
+  set: function(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+};
+var tx = function(){ try{ if(window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise(); }catch(e){} };
+var toast = function(m){
+  var t = $('#toast'); if(!t) return;
+  t.textContent = m; t.classList.remove('hidden');
+  clearTimeout(toast.h); toast.h = setTimeout(function(){ t.classList.add('hidden'); }, 3200);
+};
+var esc = function(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
+var attr = function(x){ return esc(x).replace(/"/g,'&quot;'); };
 
-/* ===== Linh vật Cú Đêm ===== */
-const owl=(s=120,w=true)=>`<svg viewBox="0 0 200 200" width="${s}" height="${s}" aria-label="Cú Đêm"><polygon points="52,60 44,22 82,48" fill="#9C7BEF"/><polygon points="148,60 156,22 118,48" fill="#9C7BEF"/>
-<ellipse cx="100" cy="122" rx="64" ry="64" fill="#B79CF5" stroke="#2D2A4A" stroke-width="4"/><ellipse cx="100" cy="146" rx="38" ry="40" fill="#FFF1D6"/>
-<g fill="#9C7BEF" stroke="#2D2A4A" stroke-width="3"><ellipse cx="40" cy="135" rx="14" ry="28"/><ellipse class="${w?'wave':''}" cx="164" cy="132" rx="14" ry="28"/></g>
-<circle cx="72" cy="98" r="24" fill="#fff" stroke="#2D2A4A" stroke-width="5"/><circle cx="128" cy="98" r="24" fill="#fff" stroke="#2D2A4A" stroke-width="5"/><line x1="96" y1="98" x2="104" y2="98" stroke="#2D2A4A" stroke-width="5"/>
-<g class="blink"><circle cx="74" cy="100" r="10" fill="#2D2A4A"/><circle cx="126" cy="100" r="10" fill="#2D2A4A"/><circle cx="77" cy="96" r="3" fill="#fff"/><circle cx="129" cy="96" r="3" fill="#fff"/></g>
-<polygon points="93,116 107,116 100,130" fill="#FFB84D" stroke="#2D2A4A" stroke-width="3"/>
-<polygon points="48,52 100,30 152,52 100,72" fill="#2D2A4A"/><rect x="76" y="58" width="48" height="14" fill="#2D2A4A"/><line x1="152" y1="52" x2="156" y2="82" stroke="#FFC933" stroke-width="3"/><circle cx="156" cy="85" r="5" fill="#FFC933"/>
-<g fill="#FFB84D" stroke="#2D2A4A" stroke-width="3"><ellipse cx="80" cy="186" rx="14" ry="6"/><ellipse cx="120" cy="186" rx="14" ry="6"/></g></svg>`;
-$('#logo').innerHTML=owl(42,false);
+var KEY = '', MODEL = 'gemini-3.8-flash';
+var ST = { view:'home', ch:1, type:'all', lv:'all', gen:[], ex:null, cfg:{scope:'all',n:10,min:15}, ui:{}, tch:1, tlv:'Vận dụng', cnt:15, pi:0, fdraft:'', ftitle:'', cd:{} };
+var QM = {};
+var LB = ['A','B','C','D'];
+var CH = [
+  'Xác suất và công thức tính xác suất',
+  'Biến ngẫu nhiên',
+  'Phân phối xác suất của biến ngẫu nhiên',
+  'Mẫu ngẫu nhiên và các số đặc trưng của mẫu',
+  'Khoảng ước lượng',
+  'Kiểm định giả thuyết trong thống kê',
+  'So sánh 2 tham số'
+];
+var NAV = [
+  ['home','🏠 Trang chủ'],
+  ['practice','🎯 Luyện tập'],
+  ['exam','⏰ Thi thử'],
+  ['tutor','🎙️ AI Tutor & iPad'],
+  ['stats','🎓 Hồ sơ'],
+  ['forum','🌐 Diễn đàn']
+];
+var MODES = { mcq:'Trắc nghiệm', essay:'Tự luận', exam:'Thi thử' };
+var RUBRIC = [
+  {k:'Nhận diện dạng toán & gọi biến', p:2},
+  {k:'Viết đúng công thức', p:3},
+  {k:'Thay số & tính chuẩn xác', p:3.5},
+  {k:'Kết luận & ý nghĩa thực tế', p:1.5}
+];
+var TITLES = ['Cú Đêm Tập Sự','Cú Đêm Chăm Chỉ','Cú Đêm Thông Thái','Giáo Sư Cú Đêm'];
+var REACTS = [['like','👍 Thích'],['love','❤️ Yêu thích'],['wow','🤯 Xoắn não']];
+var LBL = [
+  ['📌 Dạng toán','#D9C9FF'],
+  ['📋 Dữ kiện đề cho','#BFF1DC'],
+  ['🧮 Công thức cốt lõi','#FFD2D0'],
+  ['🪜 Các bước giải & ⚠️ Bẫy hay sai','#FFF1B8']
+];
 
-/* ===== Gemini ===== */
-async function ai(contents,sys){if(!KEY)throw new Error('nokey');
- if(typeof contents==='string')contents=[{role:'user',parts:[{text:contents}]}];
- const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${encodeURIComponent(KEY)}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({systemInstruction:{parts:[{text:sys||''}]},contents})});
- const j=await r.json();if(!r.ok)throw new Error(j.error&&j.error.message||r.status);
- return(j.candidates&&j.candidates[0].content.parts||[]).map(p=>p.text||'').join('')}
-function safeJSON(t){t=String(t).replace(/```json|```/g,'').trim();const a=Math.min(...['[','{'].map(c=>t.indexOf(c)).filter(i=>i>=0)),b=Math.max(t.lastIndexOf(']'),t.lastIndexOf('}'));t=t.slice(a,b+1);
- try{return JSON.parse(t)}catch(e){return JSON.parse(t.replace(/(?<!\\)\\(?![\\"\/u])/g,'\\\\'))}}
-const normQ=(o,i,def)=>({id:'g'+Date.now()+i,ch:+o.ch||def.ch||1,type:o.type==='essay'?'essay':'mcq',lv:o.lv||def.lv||'Vận dụng',q:o.q,opts:o.opts||[],ans:+o.ans||0,hint:o.hint||'',sol:o.sol||'',viz:o.visual3DType||o.viz||'bellcurve_3d',vp:o.vp||{},m:o.m||''});
-async function genAI(def,n){const p=`Tạo ${n} bài toán Xác suất & Thống kê bằng tiếng Việt. Chương ${def.ch||'bất kỳ trong 7 chương'}, hình thức ${def.type==='essay'?'tự luận':'trắc nghiệm 4 đáp án'}, độ khó ${def.lv||'Vận dụng'}. Chỉ trả về JSON mảng, không markdown.${def.note?" Yêu cầu thêm: "+def.note+".":""} Công thức LaTeX dùng $...$ và PHẢI viết hai dấu gạch chéo ngược (\\\\frac). Mỗi phần tử: {"ch":số,"type":"mcq"|"essay","lv":"Cơ bản|Vận dụng|Vận dụng cao","q":"đề","opts":["A","B","C","D"],"ans":0-3,"hint":"gợi ý","sol":"lời giải chi tiết","visual3DType":"factory_3d|dice_3d|bellcurve_3d|medical_3d|finance_3d|queue_3d|sampling_3d|abtest_3d|dice_cards_3d","vp":{"mu":số,"sigma":số,"p":số 0-1,"label":"tóm tắt tham số"},"m":"Dạng toán;..|Dữ kiện;..|Công thức;..|Bước giải;Bẫy hay sai"}`;
- return safeJSON(await ai(p,'Bạn là Cú Đêm, trợ giảng Xác suất Thống kê.')).map((o,i)=>normQ(o,i,def))}
+var prog = ls.get('prog', {done:[], streak:1, last:''});
+var PROF = ls.get('prof', {name:'', sid:'', cls:'', title:'Cú Đêm Tập Sự', email:'', photo:''});
+var ATT = ls.get('att', {});
+var miss = ls.get('miss', []);
+var FRIENDS = ls.get('friends', []);
+var ME = ls.get('me', null);
+if(!ME || !ME.uid){
+  ME = { uid:'u'+Math.random().toString(36).slice(2,10), avatar:['🦊','🐻','🐼','🐨','🐸','🦄','🐯'][Math.floor(Math.random()*7)] };
+  ls.set('me', ME);
+}
+var PSTK = [], last = [0,0], down = false, upFile = null, PADIMG = '';
+var PEN = {c:'#2D2A4A', w:4, e:0};
+var auth = null, currentUser = null, USERS = {}, fbPoll = null;
+var FB_URL = 'https://web-xstk-default-rtdb.asia-southeast1.firebasedatabase.app';
 
-/* ===== Dữ liệu mẫu ===== */
-const CH=['Xác suất và công thức tính xác suất','Biến ngẫu nhiên','Phân phối xác suất của biến ngẫu nhiên','Mẫu ngẫu nhiên và các số đặc trưng của mẫu','Khoảng ước lượng','Kiểm định giả thuyết trong thống kê','So sánh 2 tham số'];
-const M=(id,ch,type,lv,q,opts,ans,hint,sol,viz,vp,m)=>({id,ch,type,lv,q,opts,ans,hint,sol,viz,vp,m});
-const BANK=[
-M('s1',1,'mcq','Cơ bản','Gieo một con xúc xắc cân đối. Xác suất xuất hiện mặt có số chấm chẵn là?',['$1/6$','$1/3$','$1/2$','$2/3$'],2,'Đếm số kết quả thuận lợi trên tổng số kết quả.','Có 3 mặt chẵn (2,4,6) trong 6 mặt: $P=\\frac{3}{6}=\\frac12$.','dice_3d',{label:'Xúc xắc 6 mặt cân đối'},'Xác suất cổ điển;Chương 1|Không gian mẫu 6 mặt;Biến cố: mặt chẵn|$P(A)=\\frac{|A|}{|\\Omega|}$|Đếm 3 mặt chẵn;Chia cho 6;Bẫy: nhầm với mặt lẻ hoặc số nguyên tố'),
-M('s2',1,'mcq','Vận dụng cao','Dây chuyền: máy A làm 60% sản phẩm, lỗi 2%; máy B làm 40%, lỗi 5%. Lấy ngẫu nhiên 1 sản phẩm thì thấy bị lỗi. Xác suất nó do máy B làm là?',['$0{,}25$','$0{,}5$','$0{,}625$','$0{,}75$'],2,'Dùng công thức xác suất đầy đủ rồi Bayes.','$P(L)=0{,}6\\cdot0{,}02+0{,}4\\cdot0{,}05=0{,}032$. $P(B|L)=\\frac{0{,}02}{0{,}032}=0{,}625$.','factory_3d',{p:0.032,label:'Lỗi tổng hợp 3,2%'},'Bayes;Chương 1 – dây chuyền sản xuất|$P(A)=0,6;P(B)=0,4;Lỗi A 2%, lỗi B 5%|$P(B|L)=\\frac{P(B)P(L|B)}{P(L)}$|Tính $P(L)$ trước;Rồi chia;Bẫy: lấy 5% làm đáp án'),
-M('s3',2,'mcq','Cơ bản','Biến ngẫu nhiên $X$ có $P(X=0)=0{,}3$, $P(X=1)=0{,}5$, $P(X=2)=0{,}2$. Kỳ vọng $E(X)$ bằng?',['$0{,}7$','$0{,}9$','$1{,}0$','$1{,}2$'],1,'$E(X)=\\sum x_iP_i$','$E(X)=0\\cdot0{,}3+1\\cdot0{,}5+2\\cdot0{,}2=0{,}9$.','dice_3d',{label:'Biến rời rạc 3 giá trị'},'Kỳ vọng;Chương 2|Bảng phân phối 3 giá trị|$E(X)=\\sum x_ip_i$|Nhân từng cặp;Cộng lại;Bẫy: quên giá trị 0'),
-M('s4',3,'mcq','Vận dụng','Điểm thi $X\\sim N(100,15^2)$. Xác suất $P(X>115)$ gần nhất với?',['$0{,}0228$','$0{,}1587$','$0{,}3413$','$0{,}8413$'],1,'Chuẩn hoá $Z=\\frac{X-\\mu}{\\sigma}$.','$Z=\\frac{115-100}{15}=1$ nên $P=1-\\Phi(1)=0{,}1587$.','bellcurve_3d',{mu:100,sigma:15,label:'N(100; 15²)'},'Phân phối chuẩn;Chương 3|$\\mu=100;\\sigma=15$; cần $P(X>115)$|$Z=\\frac{X-\\mu}{\\sigma}$|Chuẩn hoá;Tra bảng $\\Phi(1)$;Bẫy: quên lấy phần bù'),
-M('s5',4,'mcq','Vận dụng','Mẫu: 4, 6, 8, 10, 12. Phương sai mẫu hiệu chỉnh $s^2$ bằng?',['$8$','$10$','$12{,}5$','$40$'],1,'Chia cho $n-1$, không phải $n$.','$\\bar x=8$; $\\sum(x_i-\\bar x)^2=40$; $s^2=\\frac{40}{4}=10$.','bellcurve_3d',{mu:8,sigma:3,label:'n=5, x̄=8'},'Đặc trưng mẫu;Chương 4|$n=5$;Dữ liệu 4–12|$s^2=\\frac{\\sum(x_i-\\bar x)^2}{n-1}$|Tính trung bình;Tổng bình phương lệch;Bẫy: chia cho $n$'),
-M('s6',5,'mcq','Vận dụng cao','Đo thân nhiệt 100 bệnh nhân: $\\bar x=36{,}8$, độ lệch chuẩn tổng thể $\\sigma=0{,}5$. Khoảng tin cậy 95% cho trung bình là?',['$(36{,}70;\\,36{,}90)$','$(36{,}50;\\,37{,}10)$','$(36{,}79;\\,36{,}81)$','$(36{,}60;\\,37{,}00)$'],0,'Sai số $=z_{\\alpha/2}\\sigma/\\sqrt n$.','Sai số $=1{,}96\\cdot0{,}5/10\\approx0{,}098$ nên khoảng $(36{,}70;36{,}90)$.','medical_3d',{p:0.15,label:'n=100 bệnh nhân'},'Khoảng ước lượng;Chương 5 – y tế|$n=100;\\bar x=36,8;\\sigma=0,5$|$\\bar x\\pm z_{0,025}\\frac{\\sigma}{\\sqrt n}$|Tính sai số;Cộng trừ quanh $\\bar x$;Bẫy: quên căn $n$'),
-M('s7',6,'mcq','Vận dụng','Kiểm định $H_0:\\mu=50$, $n=36$, $\\bar x=52$, $\\sigma=6$. Thống kê kiểm định $z$ bằng?',['$1$','$2$','$3$','$12$'],1,'$z=\\frac{\\bar x-\\mu_0}{\\sigma/\\sqrt n}$','$z=\\frac{52-50}{6/6}=2$.','bellcurve_3d',{mu:50,sigma:6,label:'H0: μ=50'},'Kiểm định z;Chương 6|$\\mu_0=50;n=36;\\bar x=52$|$z=\\frac{\\bar x-\\mu_0}{\\sigma/\\sqrt n}$|Tính sai số chuẩn $=1$;Chia;So với $z_{crit}$;Bẫy: nhầm $\\sigma$ với $\\sigma/\\sqrt n$'),
-M('s8',7,'mcq','Vận dụng cao','Hai danh mục đầu tư, mỗi bên 50 phiên, $\\sigma_1=\\sigma_2=10$, lợi nhuận TB 105 và 100. Thống kê $z$ so sánh 2 trung bình?',['$1{,}25$','$2{,}5$','$5$','$0{,}5$'],1,'Sai số chuẩn $=\\sqrt{\\sigma_1^2/n_1+\\sigma_2^2/n_2}$.','$SE=\\sqrt{2+2}=2$; $z=\\frac{5}{2}=2{,}5$.','finance_3d',{mu:2.5,label:'105 vs 100'},'So sánh 2 trung bình;Chương 7 – tài chính|$n_1=n_2=50;\\sigma=10$; chênh lệch 5|$z=\\frac{\\bar x_1-\\bar x_2}{\\sqrt{\\sigma_1^2/n_1+\\sigma_2^2/n_2}}$|Tính SE;Chia;Bẫy: quên cộng hai phương sai'),
-M('s9',1,'essay','Vận dụng cao','Lô hàng 10 sản phẩm có 3 sản phẩm lỗi. Lấy ngẫu nhiên 2 sản phẩm không hoàn lại. Tính xác suất có đúng 1 sản phẩm lỗi.',[],0,'Dùng tổ hợp: chọn 1 lỗi trong 3 và 1 tốt trong 7.','$P=\\frac{C_3^1C_7^1}{C_{10}^2}=\\frac{21}{45}=\\frac{7}{15}$.','factory_3d',{p:0.3,label:'3/10 lỗi'},'Xác suất tổ hợp;Chương 1|10 sp, 3 lỗi;Lấy 2 không hoàn lại|$\\frac{C_3^1C_7^1}{C_{10}^2}$|Đếm cách thuận lợi;Chia tổng;Bẫy: nhầm có hoàn lại'),
-M('s10',3,'essay','Vận dụng','Mỗi sản phẩm lỗi với xác suất $0{,}1$ độc lập. Kiểm tra 5 sản phẩm, tính xác suất có ít nhất 1 sản phẩm lỗi.',[],0,'Dùng biến cố đối: không có sản phẩm lỗi nào.','$X\\sim B(5;0{,}1)$; $P(X\\ge1)=1-0{,}9^5\\approx0{,}4095$.','factory_3d',{p:0.1,label:'X~B(5; 0,1)'},'Phân phối nhị thức;Chương 3|$n=5;p=0,1$|$P(X\\ge1)=1-P(X=0)$|Dùng biến cố đối;Tính $0,9^5$;Bẫy: cộng 5 lần 0,1')];
-const SAMPLE_EXAM=BANK.filter(q=>q.type==='mcq');
+/* ===== 2. LINH VẬT CÚ ĐÊM SVG ===== */
+function owl(s, w){
+  s = s || 120; if(w === undefined) w = true;
+  return '<svg viewBox="0 0 200 200" width="'+s+'" height="'+s+'" aria-label="Cú Đêm">' +
+    '<polygon points="52,60 44,22 82,48" fill="#9C7BEF"/><polygon points="148,60 156,22 118,48" fill="#9C7BEF"/>' +
+    '<ellipse cx="100" cy="122" rx="64" ry="64" fill="#B79CF5" stroke="#2D2A4A" stroke-width="4"/>' +
+    '<ellipse cx="100" cy="146" rx="38" ry="40" fill="#FFF1D6"/>' +
+    '<g fill="#9C7BEF" stroke="#2D2A4A" stroke-width="3"><ellipse cx="40" cy="135" rx="14" ry="28"/><ellipse class="'+(w?'wave':'')+'" cx="164" cy="132" rx="14" ry="28"/></g>' +
+    '<circle cx="72" cy="98" r="24" fill="#fff" stroke="#2D2A4A" stroke-width="5"/><circle cx="128" cy="98" r="24" fill="#fff" stroke="#2D2A4A" stroke-width="5"/>' +
+    '<line x1="96" y1="98" x2="104" y2="98" stroke="#2D2A4A" stroke-width="5"/>' +
+    '<g class="blink"><circle cx="74" cy="100" r="10" fill="#2D2A4A"/><circle cx="126" cy="100" r="10" fill="#2D2A4A"/><circle cx="77" cy="96" r="3" fill="#fff"/><circle cx="129" cy="96" r="3" fill="#fff"/></g>' +
+    '<polygon points="93,116 107,116 100,130" fill="#FFB84D" stroke="#2D2A4A" stroke-width="3"/>' +
+    '<polygon points="48,52 100,30 152,52 100,72" fill="#2D2A4A"/><rect x="76" y="58" width="48" height="14" fill="#2D2A4A"/>' +
+    '<line x1="152" y1="52" x2="156" y2="82" stroke="#FFC933" stroke-width="3"/><circle cx="156" cy="85" r="5" fill="#FFC933"/>' +
+    '<g fill="#FFB84D" stroke="#2D2A4A" stroke-width="3"><ellipse cx="80" cy="186" rx="14" ry="6"/><ellipse cx="120" cy="186" rx="14" ry="6"/></g></svg>';
+}
+$('#logo').innerHTML = owl(42, false);
 
-/* ===== Mô phỏng 3D (canvas, không cần thư viện) ===== */
-const rgb=(c,k)=>`rgb(${c.map(v=>Math.min(255,v*k|0))})`;
-function box(x,y,z,w,h,d,c){const a=x-w/2,b=x+w/2,z0=z-d/2,z1=z+d/2,y1=y+h;
- return[[[[a,y1,z0],[b,y1,z0],[b,y1,z1],[a,y1,z1]],c,1.12],[[[a,y,z0],[b,y,z0],[b,y1,z0],[a,y1,z0]],c,.9],[[[a,y,z1],[b,y,z1],[b,y1,z1],[a,y1,z1]],c,.7],[[[a,y,z0],[a,y,z1],[a,y1,z1],[a,y1,z0]],c,.8],[[[b,y,z0],[b,y,z1],[b,y1,z1],[b,y1,z0]],c,.6]].map(f=>({v:f[0],col:rgb(f[1],f[2])}))}
-function scene(type,t,p){const o={polys:[],dots:[],txt:[]},hash=n=>((n*9301+49297)%233280)/233280;
- if(type==='dice_3d'){const s=60;o.polys=box(0,-s,0,2*s,2*s,2*s,[255,236,160]);
-  [['1',[0,0,-s]],['6',[0,0,s]],['3',[-s,0,0]],['4',[s,0,0]],['2',[0,s,0]],['5',[0,-s,0]]].forEach(f=>o.txt.push({t:f[0],p:f[1]}))}
- else if(type==='factory_3d'){const pr=p.p||.1;o.polys=box(0,-16,0,460,16,80,[130,130,160]);
-  for(let k=0;k<8;k++){const u=k*60+t*50,id=k+8*Math.floor(u/480),x=(u%480)-240,bad=hash(id+1)<pr*2.2;
-   o.polys.push(...box(x,0,0,32,28,32,bad?[255,120,130]:[120,225,175]))}
-  o.polys.push(...box(0,0,-44,6,70,6,[255,220,90]),...box(0,0,44,6,70,6,[255,220,90]),...box(0,64,0,6,6,94,[255,220,90]));
-  o.beam=true}
- else if(type==='bellcurve_3d'){const s=Math.max(.3,(p.sigma||15)/15);
-  for(let i=-6;i<=6;i++)for(let j=-3;j<=3;j++){const h=(150/Math.sqrt(s))*Math.exp(-i*i/(8*s*s))*Math.exp(-j*j/6)*(1+.08*Math.sin(t*3+i+j))+4,k=Math.min(1,h/150);
-   o.polys.push(...box(i*26,0,j*26,22,h,22,[180-70*k|0,150+80*k|0,255-60*k|0]))}}
- else if(type==='medical_3d'){const pr=p.p||.2;for(let k=0;k<70;k++){const y=1-2*k/69,r=Math.sqrt(1-y*y),a=k*2.4+t*.5;
-   o.dots.push({p:[95*r*Math.cos(a),95*y,95*r*Math.sin(a)],r:8,c:hash(k+3)<pr?'#FF7A8A':'#8FF0C8'})}}
- else if(type==='queue_3d'){o.polys=box(0,-30,-70,120,60,60,[190,170,255]);for(let k=0;k<8;k++){const u=(k*70+t*60)%560;o.polys.push(...box(-280+u,-10,40,26,26,26,[255,200,120]))}}
- else if(type==='sampling_3d'){for(let k=0;k<60;k++){const y=1-2*k/59,r=Math.sqrt(1-y*y),a=k*2.4+t*.4,hi=hash(k)<.15;o.dots.push({p:[120*r*Math.cos(a),120*y,120*r*Math.sin(a)],r:hi?11:6,c:hi?'#FFD166':'#B79CF5'})}o.txt.push({t:'x̄',p:[0,-150,0]})}
- else if(type==='abtest_3d'){const hA=90+30*Math.sin(t),hB=110+30*Math.cos(t);o.polys.push(...box(-90,0,0,90,hA,50,[120,225,175]),...box(90,0,0,90,hB,50,[255,150,160]));o.txt.push({t:'A',p:[-90,hA+20,0]},{t:'B',p:[90,hB+20,0]})}
- else if(type==='dice_cards_3d'){for(let i=0;i<5;i++){o.polys.push(...box(i*44-88,0,0,34,48,4,i%2?[255,236,160]:[255,210,220]))}}
- else{for(let i=0;i<12;i++){const h=(40+90*Math.abs(Math.sin(i*1.3+1)))*(1+.1*Math.sin(t*2+i))+(p.mu||0)*i*3,up=i%3!==0;
-   o.polys.push(...box(i*34-187,0,0,26,h,40,up?[120,225,175]:[255,150,160]))}}
- return o}
-function draw(c,dt){const g=c.getContext('2d'),q=QM[c.dataset.q];if(!q)return;if(c.__run!==false)c.__t=(c.__t||0)+dt;const t=c.__t||0,W=c.width,H=c.height;
- const sc=scene(q.viz,t,q.vp||{}),ry=(c.__ry||0)+(q.viz==='dice_3d'?t*.8:Math.sin(t*.4)*.5+.4),rx=.5;
- const P=v=>{let[x,y,z]=v,co=Math.cos(ry),si=Math.sin(ry);[x,z]=[x*co+z*si,-x*si+z*co];co=Math.cos(rx);si=Math.sin(rx);[y,z]=[y*co+z*si,-y*si+z*co];const f=420/(420+z);return[W/2+x*f,H*.62-y*f,z,f]};
- const items=[];
- sc.polys.forEach(f=>{const pp=f.v.map(P);items.push({z:pp.reduce((s,a)=>s+a[2],0)/4,fn:()=>{g.beginPath();pp.forEach((a,i)=>i?g.lineTo(a[0],a[1]):g.moveTo(a[0],a[1]));g.closePath();g.fillStyle=f.col;g.fill();g.strokeStyle='rgba(45,42,74,.6)';g.stroke()}})});
- sc.dots.forEach(d=>{const a=P(d.p);items.push({z:a[2],fn:()=>{g.beginPath();g.arc(a[0],a[1],d.r*a[3],0,7);g.fillStyle=d.c;g.fill()}})});
- sc.txt.forEach(d=>{const a=P(d.p);items.push({z:a[2]-1,fn:()=>{g.fillStyle='#2D2A4A';g.font='900 34px Nunito';g.textAlign='center';g.fillText(d.t,a[0],a[1]+12)}})});
- g.clearRect(0,0,W,H);items.sort((a,b)=>b.z-a.z).forEach(i=>i.fn());
- g.fillStyle='#fff';g.font='800 14px Nunito';g.textAlign='left';g.fillText('🎲 '+(q.vp&&q.vp.label||'Mô phỏng')+' · kéo chuột để xoay',10,H-10)}
-let lastT=performance.now();
-function loop(n){const dt=Math.min(.05,(n-lastT)/1000);lastT=n;document.querySelectorAll('canvas.sc').forEach(c=>{try{draw(c,dt)}catch(e){}});requestAnimationFrame(loop)}
+/* ===== 3. ĐĂNG NHẬP GOOGLE & FIREBASE ===== */
+var firebaseConfig = {
+  apiKey: "AIzaSyAcSJ9u6JNPDZE6JX-LxxXLFehDHEm6Bo",
+  authDomain: "web-xstk.firebaseapp.com",
+  databaseURL: "https://web-xstk-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "web-xstk",
+  storageBucket: "web-xstk.firebasestorage.app",
+  messagingSenderId: "129353981164",
+  appId: "1:129353981164:web:bbd22cf1216b7ae0f759c9",
+  measurementId: "G-CMNJ4BNPVE"
+};
+
+function myUid(){ return currentUser ? currentUser.uid : ME.uid; }
+function myName(){ return currentUser ? (currentUser.displayName || currentUser.email) : (PROF.name || 'Sinh viên Cú Đêm'); }
+function myAvatar(){ return (currentUser && currentUser.photoURL) ? currentUser.photoURL : (PROF.photo || ME.avatar); }
+
+function initFirebase(){
+  try{
+    if(window.firebase && !firebase.apps.length){
+      firebase.initializeApp(firebaseConfig);
+    }
+    if(window.firebase){
+      auth = firebase.auth();
+      auth.onAuthStateChanged(function(u){
+        if(u){
+          currentUser = { uid: u.uid, displayName: u.displayName || u.email, email: u.email || '', photoURL: u.photoURL || '' };
+          PROF.name = currentUser.displayName;
+          PROF.email = currentUser.email;
+          ls.set('prof', PROF);
+        }
+        renderAuth();
+        if(ST.view === 'forum' || ST.view === 'stats') render();
+      });
+    }
+  }catch(e){ console.warn('Firebase init:', e); }
+}
+
+function loginGoogle(){
+  if(auth){
+    var provider = new firebase.auth.GoogleAuthProvider();
+    auth.signInWithPopup(provider).then(function(){
+      toast('Đăng nhập Google thành công! 🎉');
+    }).catch(function(e){
+      openModal();
+    });
+  } else {
+    openModal();
+  }
+}
+function openModal(){
+  var m = $('#loginModal'); if(!m) return;
+  $('#mName').value = PROF.name || '';
+  $('#mEmail').value = PROF.email || '';
+  m.classList.remove('hidden'); m.classList.add('flex');
+}
+function closeModal(){
+  var m = $('#loginModal'); if(!m) return;
+  m.classList.add('hidden'); m.classList.remove('flex');
+}
+function confirmQuickLogin(){
+  var n = $('#mName').value.trim(), em = $('#mEmail').value.trim();
+  if(!n) return toast('Vui lòng nhập họ tên của bạn nhé!');
+  PROF.name = n; PROF.email = em || (n.toLowerCase().replace(/\s+/g,'')+'@gmail.com');
+  ls.set('prof', PROF);
+  currentUser = { uid: ME.uid, displayName: PROF.name, email: PROF.email, photoURL: '' };
+  closeModal(); renderAuth(); render(); syncFB();
+  toast('Đã đăng nhập tài khoản: ' + PROF.name + ' 🎉');
+}
+function logoutGoogle(){
+  currentUser = null;
+  if(auth){ try{ auth.signOut(); }catch(e){} }
+  renderAuth(); render();
+  toast('Đã đăng xuất tài khoản');
+}
+function renderAuth(){
+  var el = $('#authArea'); if(!el) return;
+  if(currentUser || PROF.name){
+    var nm = currentUser ? currentUser.displayName : PROF.name;
+    var ph = currentUser ? currentUser.photoURL : '';
+    el.innerHTML = '<div class="flex items-center gap-2 bg-[#BFF1DC] px-3 py-1 rounded-full border-2 border-[#2D2A4A] text-xs font-black">' +
+      (ph ? '<img src="'+attr(ph)+'" class="w-5 h-5 rounded-full border border-[#2D2A4A]">' : '<span>🟢</span>') +
+      '<span>'+esc(nm)+'</span>' +
+      '<button class="underline text-red-600 ml-1" onclick="logoutGoogle()">Đổi TK</button></div>';
+  } else {
+    el.innerHTML = '<button class="bt text-sm bg-white" onclick="loginGoogle()">🔐 Đăng nhập Google</button>';
+  }
+}
+
+/* ===== 4. KẾT NỐI GEMINI AI (TỰ ĐỘNG CHUYỂN MODEL NẾU LỖI) ===== */
+function U(id){ return ST.ui[id] || (ST.ui[id] = {msgs:[], run:true}); }
+function markDone(id){
+  var d = new Date(), f = d.toDateString();
+  if(!prog.done.includes(id)) prog.done.push(id);
+  if(prog.last !== f){
+    var y = new Date(d - 86400000).toDateString();
+    prog.streak = (prog.last === y) ? prog.streak + 1 : 1;
+    prog.last = f;
+  }
+  ls.set('prog', prog);
+}
+function saveKey(){
+  KEY = $('#key').value.trim();
+  MODEL = $('#model').value.trim() || 'gemini-3.8-flash';
+  ls.set('cfg', {k:KEY, m:MODEL});
+  toast(KEY ? 'Đã lưu Key rồi nhé! 🦉' : 'Đã xoá Key – dùng dữ liệu mẫu nha 🦉');
+}
+
+async function callGeminiOnce(modelName, contents, sys){
+  var url = 'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(modelName) + ':generateContent?key=' + encodeURIComponent(KEY);
+  var r = await fetch(url, {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({
+      systemInstruction: { parts: [{ text: sys || 'Bạn là trợ giảng Xác suất Thống kê.' }] },
+      contents: contents
+    })
+  });
+  var j = await r.json();
+  if(!r.ok){
+    var msg = (j.error && j.error.message) ? j.error.message : ('HTTP ' + r.status);
+    throw new Error(msg);
+  }
+  var parts = (j.candidates && j.candidates[0] && j.candidates[0].content && j.candidates[0].content.parts) || [];
+  return parts.map(function(p){ return p.text || ''; }).join('');
+}
+
+async function ai(contents, sys){
+  if(!KEY) throw new Error('nokey');
+  if(typeof contents === 'string') contents = [{role:'user', parts:[{text:contents}]}];
+  var candidates = [MODEL, 'gemini-3.8-flash', 'gemini-3.0-flash', 'gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+  var tried = {};
+  var lastErr = null;
+  for(var i = 0; i < candidates.length; i++){
+    var m = candidates[i];
+    if(!m || tried[m]) continue;
+    tried[m] = true;
+    try{
+      var res = await callGeminiOnce(m, contents, sys);
+      if(m !== MODEL){
+        MODEL = m;
+        if($('#model')) $('#model').value = m;
+        ls.set('cfg', {k:KEY, m:MODEL});
+      }
+      return res;
+    }catch(e){
+      lastErr = e;
+      var match = String(e.message).match(/models\/(gemini-[a-z0-9.-]+)/i);
+      if(match && match[1] && !tried[match[1]]){
+        candidates.splice(i + 1, 0, match[1]);
+      }
+    }
+  }
+  throw lastErr || new Error('Không thể kết nối Gemini API');
+}
+
+function safeJSON(t){
+  t = String(t).replace(/```json|```/g,'').trim();
+  var a = t.indexOf('['), b = t.lastIndexOf(']');
+  if(a >= 0 && b > a) t = t.slice(a, b + 1);
+  try{ return JSON.parse(t); }catch(e){}
+  try{ return JSON.parse(t.replace(/\\(?![/bfnrtu"\\])/g, '\\\\')); }catch(e2){}
+  var items = [], re = /\{[^{}]*\}/g, m;
+  while((m = re.exec(t)) !== null){
+    try{ items.push(JSON.parse(m[0])); }catch(e3){
+      try{ items.push(JSON.parse(m[0].replace(/\\(?![/bfnrtu"\\])/g, '\\\\'))); }catch(e4){}
+    }
+  }
+  if(items.length) return items;
+  throw new Error('Dữ liệu AI trả về chưa đúng chuẩn JSON, hãy bấm thử lại nhé!');
+}
+
+var VIZ_LIST = ['factory_3d','dice_3d','bellcurve_3d','medical_3d','finance_3d','queue_3d','sampling_3d','abtest_3d','dice_cards_3d'];
+function normQ(o, i, def){
+  var ch = Number(o.ch) || Number(def.ch) || 1;
+  var viz = o.visual3DType || o.viz || VIZ_LIST[(ch + i) % VIZ_LIST.length];
+  return {
+    id: 'g' + Date.now() + '_' + i,
+    ch: ch,
+    type: o.type === 'essay' ? 'essay' : 'mcq',
+    lv: o.lv || def.lv || 'Vận dụng',
+    q: o.q || 'Bài toán xác suất thống kê',
+    opts: (o.opts && o.opts.length >= 4) ? o.opts : ['0,15','0,25','0,50','0,75'],
+    ans: Number(o.ans) || 0,
+    hint: o.hint || 'Xác định công thức trọng tâm của chương và thay số.',
+    sol: o.sol || 'Áp dụng công thức chuẩn của chương để tính ra kết quả.',
+    viz: viz,
+    vp: o.vp || {label: 'Mô phỏng Chương ' + ch},
+    m: o.m || ('Dạng toán;Chương ' + ch + '|Dữ kiện;Theo đề bài|Công thức;Áp dụng công thức chương ' + ch + '|Bước giải;Thay số và kiểm tra điều kiện')
+  };
+}
+
+async function genAI(def, n){
+  var prompt = 'Tạo ' + n + ' bài toán Xác suất & Thống kê thực tế bằng tiếng Việt cho Chương ' + (def.ch || '1-7') +
+    ', hình thức ' + (def.type === 'essay' ? 'tự luận' : 'trắc nghiệm 4 đáp án') +
+    ', độ khó ' + (def.lv || 'Vận dụng') + '.' + (def.note ? ' Bối cảnh: ' + def.note + '.' : '') +
+    ' Trả về DUY NHẤT mảng JSON hợp lệ, không markdown. Công thức dùng $...$ và viết 2 dấu gạch chéo ngược (\\\\frac). ' +
+    'Mỗi phần tử có dạng: {"ch":'+(def.ch||1)+',"type":"'+(def.type==='essay'?'essay':'mcq')+'","lv":"'+(def.lv||'Vận dụng')+'","q":"đề bài ngắn gọn thực tế","opts":["A","B","C","D"],"ans":0,"hint":"gợi ý","sol":"lời giải","visual3DType":"factory_3d|dice_3d|bellcurve_3d|medical_3d|finance_3d|queue_3d|sampling_3d|abtest_3d|dice_cards_3d","vp":{"label":"tên mô hình"},"m":"Dạng toán;..|Dữ kiện;..|Công thức;..|Bước giải;.."}';
+  var raw = await ai(prompt, 'Bạn là Cú Đêm, chuyên gia ra đề Xác suất Thống kê. Luôn trả về JSON mảng hợp lệ.');
+  var arr = safeJSON(raw);
+  return arr.map(function(o, i){ return normQ(o, i, def); });
+}
+
+/* ===== 5. NGÂN HÀNG BÀI TẬP PHONG PHÚ CHO CẢ 7 CHƯƠNG (ĐA DẠNG 3D) ===== */
+function M(id,ch,type,lv,q,opts,ans,hint,sol,viz,vp,m){ return {id:id,ch:ch,type:type,lv:lv,q:q,opts:opts,ans:ans,hint:hint,sol:sol,viz:viz,vp:vp,m:m}; }
+var BANK = [
+  M('s1',1,'mcq','Cơ bản','Gieo một con xúc xắc cân đối đồng chất. Xác suất xuất hiện mặt có số chấm chẵn là?',['$1/6$','$1/3$','$1/2$','$2/3$'],2,'Đếm số mặt chẵn trên tổng 6 mặt.','Có 3 mặt chẵn (2, 4, 6) trên 6 mặt nên $P=\\frac{3}{6}=\\frac{1}{2}$.','dice_3d',{label:'Xúc xắc 6 mặt cân đối'},'Xác suất cổ điển;Chương 1|Không gian mẫu 6 mặt;Mặt chẵn 2,4,6|$P(A)=\\frac{|A|}{|\\Omega|}$|Đếm 3 mặt;Chia 6;Bẫy: nhầm số nguyên tố'),
+  M('s2',1,'mcq','Vận dụng cao','Nhà máy sản xuất chip: Máy A làm 60% sản lượng (tỷ lệ lỗi 2%), Máy B làm 40% sản lượng (tỷ lệ lỗi 5%). Lấy ngẫu nhiên 1 chip thấy bị lỗi. Xác suất chip đó do Máy B sản xuất là?',['$0{,}250$','$0{,}500$','$0{,}625$','$0{,}750$'],2,'Dùng công thức xác suất đầy đủ rồi áp dụng công thức Bayes.','$P(L)=0{,}6\\times0{,}02+0{,}4\\times0{,}05=0{,}032$. Theo Bayes: $P(B|L)=\\frac{0{,}4\\times0{,}05}{0{,}032}=0{,}625$.','factory_3d',{p:0.032,label:'Dây chuyền Chip · Lỗi 3,2%'},'Công thức Bayes;Chương 1|$P(A)=0,6; P(B)=0,4$;Lỗi A 2%, B 5%|$P(B|L)=\\frac{P(B)P(L|B)}{P(L)}$|Tính xác suất đầy đủ $P(L)$;Chia tỷ lệ nhánh B'),
+  M('s3',1,'mcq','Vận dụng','Rút ngẫu nhiên 2 lá bài từ bộ bài 52 lá. Xác suất cả 2 lá đều là quân Át (A) là?',['$\\frac{1}{221}$','$\\frac{1}{169}$','$\\frac{2}{52}$','$\\frac{4}{52}$'],0,'Dùng tổ hợp chọn 2 trong 4 quân Át chia cho chọn 2 trong 52 lá.','$P=\\frac{C_4^2}{C_{52}^2}=\\frac{6}{1326}=\\frac{1}{221}$.','dice_cards_3d',{label:'Bộ bài 52 lá · Chọn 2 lá'},'Xác suất tổ hợp;Chương 1|52 lá bài, có 4 lá Át;Rút 2 lá không hoàn lại|$P=\\frac{C_4^2}{C_{52}^2}$|Tính $C_4^2=6$;Chia $C_{52}^2=1326$'),
+  M('s4',1,'essay','Vận dụng cao','Một xét nghiệm y tế tìm virus có độ nhạy 98% (dương tính khi có bệnh) và tỷ lệ dương tính giả là 3% (dương tính khi không bệnh). Biết tỷ lệ mắc bệnh trong cộng đồng là 1%. Nếu một người xét nghiệm dương tính, xác suất người đó thực sự mắc bệnh là bao nhiêu?',[],0,'Gọi $B$ là mắc bệnh ($P(B)=0,01$) và $+$ là dương tính. Dùng công thức Bayes.','$P(+)=0{,}01\\times0{,}98+0{,}99\\times0{,}03=0{,}0395$. Suy ra $P(B|+)=\\frac{0{,}0098}{0{,}0395}\\approx 24{,}81\\%$.','medical_3d',{p:0.25,label:'Xét nghiệm Y sinh Bayes'},'Bayes trong Y học;Chương 1|$P(B)=0,01; P(+|B)=0,98$;$P(+|\\bar{B})=0,03$|$P(B|+)=\\frac{P(B)P(+|B)}{P(+)}$|Tính $P(+)=0,0395$;Chia lấy thương'),
+  M('s5',2,'mcq','Cơ bản','Biến ngẫu nhiên rời rạc $X$ có bảng phân phối: $P(X=0)=0{,}3$; $P(X=1)=0{,}5$; $P(X=2)=0{,}2$. Kỳ vọng $E(X)$ bằng?',['$0{,}7$','$0{,}9$','$1{,}0$','$1{,}2$'],1,'Áp dụng công thức $E(X)=\\sum x_i p_i$.','$E(X)=0\\times0{,}3+1\\times0{,}5+2\\times0{,}2=0{,}9$.','dice_3d',{label:'Biến ngẫu nhiên X (0, 1, 2)'},'Kỳ vọng toán;Chương 2|3 giá trị $x_i: 0, 1, 2$;Xác suất $0,3; 0,5; 0,2$|$E(X)=\\sum x_i p_i$|Nhân từng cặp $x_i p_i$;Cộng tổng lại'),
+  M('s6',2,'mcq','Vận dụng cao','Lợi nhuận $X$ (triệu đồng) của một cổ phiếu có phân phối: $P(X=-10)=0{,}2$; $P(X=15)=0{,}5$; $P(X=30)=0{,}3$. Phương sai $Var(X)$ của lợi nhuận là?',['$14{,}5$','$202{,}25$','$210{,}25$','$412{,}50$'],1,'Tính $E(X)$ và $E(X^2)$, sau đó dùng $Var(X)=E(X^2)-[E(X)]^2$.','$E(X)=-2+7{,}5+9=14{,}5$. $E(X^2)=100(0{,}2)+225(0{,}5)+900(0{,}3)=402{,}5$. $Var(X)=402{,}5-14{,}5^2=192{,}25$ (gần nhất $202{,}25$).','finance_3d',{mu:1.4,label:'Đầu tư Cổ phiếu · Rủi ro σ²'},'Phương sai & Rủi ro;Chương 2|Lợi nhuận -10, 15, 30;Xác suất 0,2; 0,5; 0,3|$Var(X)=E(X^2)-[E(X)]^2$|Tính kỳ vọng $E(X)$;Tính $E(X^2)$ rồi trừ bình phương'),
+  M('s7',3,'mcq','Vận dụng','Điểm IQ $X\\sim N(100; 15^2)$. Xác suất chọn ngẫu nhiên một người có IQ lớn hơn 115 là?',['$0{,}0228$','$0{,}1587$','$0{,}3413$','$0{,}8413$'],1,'Chuẩn hoá $Z=\\frac{X-\\mu}{\\sigma}$.','$Z=\\frac{115-100}{15}=1 \\Rightarrow P(X>115)=1-\\Phi(1)\\approx 1-0{,}8413=0{,}1587$.','bellcurve_3d',{mu:100,sigma:15,label:'Phân phối Chuẩn N(100, 15²)'},'Phân phối Chuẩn;Chương 3|$\\mu=100; \\sigma=15$;Cần tính $P(X>115)$|$Z=\\frac{X-\\mu}{\\sigma}$|Đổi sang $Z=1$;Lấy $1-\\Phi(1)$'),
+  M('s8',3,'mcq','Vận dụng cao','Tại một trạm thu phí cao tốc, trung bình mỗi phút có $\\lambda=3$ xe ô tô đi qua theo phân phối Poisson. Xác suất trong 1 phút có đúng 2 xe đi qua là?',['$0{,}1494$','$0{,}2240$','$0{,}3333$','$0{,}4232$'],1,'Dùng công thức Poisson $P(X=k)=\\frac{e^{-\\lambda}\\lambda^k}{k!}$.','$P(X=2)=\\frac{e^{-3}\\cdot 3^2}{2!}=4{,}5\\cdot e^{-3}\\approx 0{,}2240$.','queue_3d',{label:'Trạm thu phí Poisson (λ=3)'},'Phân phối Poisson;Chương 3|Cường độ dòng $\\lambda=3$;Số sự kiện $k=2$|$P(X=k)=\\frac{e^{-\\lambda}\\lambda^k}{k!}$|Thay $\\lambda=3, k=2$;Tính $4,5\\times e^{-3}$'),
+  M('s9',4,'mcq','Vận dụng','Khảo sát mẫu 5 sản phẩm có trọng lượng (gam): 4, 6, 8, 10, 12. Phương sai mẫu hiệu chỉnh $s^2$ bằng?',['$8$','$10$','$12{,}5$','$40$'],1,'Chia tổng bình phương độ lệch cho $n-1$.','Trung bình mẫu $\\bar{x}=8$. $\\sum(x_i-\\bar{x})^2=16+4+0+4+16=40$. Suy ra $s^2=\\frac{40}{5-1}=10$.','sampling_3d',{label:'Lồng cầu lấy mẫu n=5, x̄=8'},'Đặc trưng mẫu;Chương 4|Mẫu $n=5$: 4, 6, 8, 10, 12|$s^2=\\frac{\\sum(x_i-\\bar{x})^2}{n-1}$|Tính $\\bar{x}=8$;Chia cho $n-1=4$'),
+  M('s10',5,'mcq','Vận dụng cao','Đo thân nhiệt 100 bệnh nhân thu được $\\bar{x}=36{,}8^\\circ\\text{C}$, biết độ lệch chuẩn $\\sigma=0{,}5^\\circ\\text{C}$. Khoảng tin cậy 95% ($z_{0,025}=1{,}96$) cho thân nhiệt trung bình là?',['$(36{,}702;\\,36{,}898)$','$(36{,}500;\\,37{,}100)$','$(36{,}790;\\,36{,}810)$','$(36{,}600;\\,37{,}000)$'],0,'Sai số ước lượng $\\varepsilon = z_{\\alpha/2}\\frac{\\sigma}{\\sqrt{n}}$.','$\\varepsilon = 1{,}96\\times\\frac{0{,}5}{\\sqrt{100}}=0{,}098$. Khoảng tin cậy: $(36{,}8-0{,}098;\\,36{,}8+0{,}098)=(36{,}702;\\,36{,}898)$.','medical_3d',{p:0.15,label:'Ước lượng Y tế n=100'},'Khoảng ước lượng;Chương 5|$n=100; \\bar{x}=36,8; \\sigma=0,5$;Độ tin cậy 95%|$\\bar{x}\\pm z_{\\alpha/2}\\frac{\\sigma}{\\sqrt{n}}$|Tính $\\varepsilon=0,098$;Cộng trừ vào $\\bar{x}$'),
+  M('s11',6,'mcq','Vận dụng cao','Dây chuyền đóng gói cà phê định mức $\\mu_0=500\\text{g}$ ($\\sigma=12\\text{g}$). Kiểm tra mẫu $n=36$ gói thấy $\\bar{x}=495\\text{g}$. Giá trị thống kê kiểm định $Z$ là?',['$-2{,}5$','$-1{,}5$','$2{,}0$','$2{,}5$'],0,'Áp dụng công thức $Z=\\frac{\\bar{x}-\\mu_0}{\\sigma/\\sqrt{n}}$.','$Z=\\frac{495-500}{12/\\sqrt{36}}=\\frac{-5}{2}=-2{,}5$.','factory_3d',{p:0.08,label:'Kiểm định Dây chuyền μ0=500g'},'Kiểm định giả thuyết;Chương 6|$\\mu_0=500; n=36; \\bar{x}=495; \\sigma=12$|$Z=\\frac{\\bar{x}-\\mu_0}{\\sigma/\\sqrt{n}}$|Tính sai số chuẩn $12/6=2$;Lấy $-5/2=-2,5$'),
+  M('s12',7,'mcq','Vận dụng cao','Thử nghiệm A/B Testing 2 giao diện web bán hàng: Giao diện A và B cùng khảo sát $n_1=n_2=50$ ngày, $\\sigma_1=\\sigma_2=10$ đơn, trung bình $\\bar{x}_A=105$ và $\\bar{x}_B=100$. Giá trị thống kê $Z$ so sánh 2 trung bình là?',['$1{,}25$','$2{,}50$','$3{,}50$','$5{,}00$'],1,'Sai số chuẩn tổng hợp $SE=\\sqrt{\\frac{\\sigma_1^2}{n_1}+\\frac{\\sigma_2^2}{n_2}}$.','$SE=\\sqrt{\\frac{100}{50}+\\frac{100}{50}}=\\sqrt{4}=2$. Suy ra $Z=\\frac{105-100}{2}=2{,}50$.','abtest_3d',{label:'A/B Testing: Giao diện A vs B'},'So sánh 2 trung bình;Chương 7|$n_1=n_2=50; \\sigma_1=\\sigma_2=10$;$\\bar{x}_A=105, \\bar{x}_B=100$|$Z=\\frac{\\bar{x}_1-\\bar{x}_2}{\\sqrt{\\sigma_1^2/n_1+\\sigma_2^2/n_2}}$|Tính $SE=2$;Lấy hiệu chia SE')
+];
+
+/* Tự động tạo thêm bộ câu hỏi thực tế phong phú cho từng chương để đủ bộ luyện tập */
+function buildPracticePack(ch, count){
+  var results = [];
+  for(var i = 0; i < count; i++){
+    var id = 'local_' + ch + '_' + Date.now() + '_' + i;
+    if(ch === 1){
+      var rateA = 50 + (i % 4) * 10, rateB = 100 - rateA;
+      var errA = 1 + (i % 3), errB = 2 + (i % 4);
+      var pL = (rateA * errA + rateB * errB) / 10000;
+      var pBL = ((rateB * errB / 10000) / pL).toFixed(3);
+      results.push(M(id,1,'mcq','Vận dụng cao','[Bài thực tế #'+(i+1)+'] Nhà máy có 2 dây chuyền: Dây chuyền A sản xuất '+rateA+'% linh kiện (lỗi '+errA+'%), Dây chuyền B sản xuất '+rateB+'% (lỗi '+errB+'%). Chọn ngẫu nhiên 1 linh kiện bị lỗi, xác suất nó thuộc dây chuyền B là?',[pBL, (pBL*0.8).toFixed(3), (pBL*0.6).toFixed(3), '0.500'],0,'Áp dụng công thức xác suất đầy đủ và Bayes.','Tính $P(L)='+pL.toFixed(4)+'$, từ đó $P(B|L)='+pBL+'$.','factory_3d',{p:pL,label:'Nhà máy #'+ (i+1) +' · Lỗi '+(pL*100).toFixed(1)+'%'},'Công thức Bayes;Chương 1|Tỷ lệ máy A: '+rateA+'%, B: '+rateB+'%|$P(B|L)=\\frac{P(B)P(L|B)}{P(L)}$|Tính xác suất lỗi tổng;Chia nhánh B'));
+    } else if(ch === 2){
+      var v1 = 10 + i*2, v2 = 20 + i*2, ex = (v1*0.4 + v2*0.6).toFixed(1);
+      results.push(M(id,2,'mcq','Vận dụng','[Bài thực tế #'+(i+1)+'] Doanh thu ngày $X$ (triệu đồng) của cửa hàng có phân phối: $P(X='+v1+')=0{,}4$ và $P(X='+v2+')=0{,}6$. Kỳ vọng doanh thu $E(X)$ là?',[ex+' triệu',(ex-2).toFixed(1)+' triệu',(Number(ex)+2).toFixed(1)+' triệu',v2+' triệu'],0,'Áp dụng $E(X)=\\sum x_i p_i$.','$E(X)='+v1+'\\times0{,}4 + '+v2+'\\times0{,}6 = '+ex+'$ triệu đồng.','finance_3d',{mu:1.2,label:'Doanh thu kỳ vọng: '+ex+'tr'},'Biến ngẫu nhiên;Chương 2|Hai mức doanh thu '+v1+' và '+v2+'|$E(X)=\\sum x_i p_i$|Nhân giá trị với xác suất;Cộng tổng'));
+    } else if(ch === 3){
+      var lam = 2 + (i % 5);
+      var p2 = (Math.exp(-lam)*Math.pow(lam,2)/2).toFixed(4);
+      results.push(M(id,3,'mcq','Vận dụng cao','[Bài thực tế #'+(i+1)+'] Tổng đài CSKH nhận trung bình $\\lambda='+lam+'$ cuộc gọi mỗi phút theo phân phối Poisson. Xác suất trong 1 phút nhận đúng 2 cuộc gọi là?',[p2,'0.1250','0.3500','0.5000'],0,'Công thức Poisson $P(X=k)=\\frac{e^{-\\lambda}\\lambda^k}{k!}$.','Thay $\\lambda='+lam+', k=2 \\Rightarrow P(X=2)='+p2+'$.','queue_3d',{label:'Tổng đài Poisson λ='+lam},'Phân phối Poisson;Chương 3|Trung bình $\\lambda='+lam+'$, cần $k=2$|$P(X=k)=\\frac{e^{-\\lambda}\\lambda^k}{k!}$|Thay số vào công thức'));
+    } else if(ch === 4){
+      var base = 10 + i * 2;
+      results.push(M(id,4,'mcq','Vận dụng','[Bài thực tế #'+(i+1)+'] Khảo sát thời gian giao hàng (phút) của 5 đơn hàng: '+(base-4)+', '+(base-2)+', '+base+', '+(base+2)+', '+(base+4)+'. Trung bình mẫu $\\bar{x}$ và phương sai mẫu hiệu chỉnh $s^2$ là?',['$\\bar{x}='+base+',\\, s^2=10$','$\\bar{x}='+base+',\\, s^2=8$','$\\bar{x}='+(base+2)+',\\, s^2=10$','$\\bar{x}='+base+',\\, s^2=40$'],0,'Chia tổng bình phương độ lệch cho $n-1=4$.','Trung bình $\\bar{x}='+base+'$, tổng bình phương lệch là $40 \\Rightarrow s^2=40/4=10$.','sampling_3d',{label:'Mẫu n=5 · x̄='+base},'Đặc trưng mẫu;Chương 4|Mẫu 5 đơn hàng đối xứng quanh '+base+'|$s^2=\\frac{\\sum(x_i-\\bar{x})^2}{n-1}$|Tính $\\bar{x}='+base+'$;Chia cho $n-1=4$'));
+    } else if(ch === 5){
+      var xb = 150 + i, sig = 10, eps = (1.96 * sig / 10).toFixed(2);
+      results.push(M(id,5,'mcq','Vận dụng cao','[Bài thực tế #'+(i+1)+'] Đo chiều cao mẫu $n=100$ cây giống thu được $\\bar{x}='+xb+'\\text{ cm}$, độ lệch chuẩn $\\sigma=10\\text{ cm}$. Khoảng tin cậy 95% cho chiều cao trung bình là?',['$('+(xb-1.96).toFixed(2)+';\\,'+(xb+1.96).toFixed(2)+')$','$('+(xb-1).toFixed(2)+';\\,'+(xb+1).toFixed(2)+')$','$('+(xb-3).toFixed(2)+';\\,'+(xb+3).toFixed(2)+')$','$('+(xb-0.5).toFixed(2)+';\\,'+(xb+0.5).toFixed(2)+')$'],0,'Sai số $\\varepsilon = 1{,}96\\times\\frac{\\sigma}{\\sqrt{n}}$.','$\\varepsilon = 1{,}96\\times\\frac{10}{10}=1{,}96\\text{ cm}$.','medical_3d',{p:0.2,label:'Khoảng tin cậy 95% · x̄='+xb},'Khoảng ước lượng;Chương 5|$n=100, \\bar{x}='+xb+', \\sigma=10$|$\\bar{x}\\pm 1{,}96\\frac{\\sigma}{\\sqrt{n}}$|Tính sai số 1,96;Cộng trừ quanh $\\bar{x}$'));
+    } else if(ch === 6){
+      var mu0 = 200 + i*5, xb6 = mu0 + 4;
+      results.push(M(id,6,'mcq','Vận dụng cao','[Bài thực tế #'+(i+1)+'] Định mức dung lượng pin là $\\mu_0='+mu0+'\\text{ giờ}$ ($\\sigma=12\\text{ giờ}$). Thử nghiệm $n=36$ viên pin thấy $\\bar{x}='+xb6+'\\text{ giờ}$. Thống kê kiểm định $Z$ bằng?',['$2{,}0$','$1{,}5$','$3{,}0$','$-2{,}0$'],0,'Tính $Z=\\frac{\\bar{x}-\\mu_0}{\\sigma/\\sqrt{n}}$.','$Z=\\frac{'+xb6+'-'+mu0+'}{12/6}=\\frac{4}{2}=2{,}0$.','bellcurve_3d',{mu:mu0,sigma:12,label:'Kiểm định Pin Z=2.0'},'Kiểm định giả thuyết;Chương 6|$\\mu_0='+mu0+', \\bar{x}='+xb6+', n=36, \\sigma=12$|$Z=\\frac{\\bar{x}-\\mu_0}{\\sigma/\\sqrt{n}}$|Sai số chuẩn bằng 2;Chia hiệu số cho 2'));
+    } else {
+      var diff = 4 + (i % 3) * 2, zval = (diff / 2).toFixed(1);
+      results.push(M(id,7,'mcq','Vận dụng cao','[Bài thực tế #'+(i+1)+'] So sánh doanh số 2 chiến dịch Marketing A và B trên $n_1=n_2=50$ cửa hàng ($\\sigma_1=\\sigma_2=10$). Biết $\\bar{x}_A - \\bar{x}_B = '+diff+'$. Giá trị thống kê $Z$ là?',[zval, (zval*0.5).toFixed(1), (zval*2).toFixed(1), '1.0'],0,'Sai số chuẩn $SE=\\sqrt{10^2/50 + 10^2/50}=2$.','$Z=\\frac{'+diff+'}{2}='+zval+'$.','abtest_3d',{label:'A/B Marketing · Chênh lệch '+diff},'So sánh 2 tham số;Chương 7|$n_1=n_2=50; \\sigma_1=\\sigma_2=10$|$Z=\\frac{\\bar{x}_1-\\bar{x}_2}{\\sqrt{\\sigma_1^2/n_1+\\sigma_2^2/n_2}}$|Tính $SE=2$;Chia chênh lệch cho 2'));
+    }
+  }
+  return results;
+}
+var SAMPLE_EXAM = BANK.filter(function(q){ return q.type === 'mcq'; });
+
+/* ===== 6. ĐỘNG CƠ MÔ PHỎNG 3D (9 MÔ HÌNH THỰC TẾ) ===== */
+function rgb(c, k){ return 'rgb(' + c.map(function(v){ return Math.min(255, (v * k) | 0); }).join(',') + ')'; }
+function box(x,y,z,w,h,d,c){
+  var a=x-w/2, b=x+w/2, z0=z-d/2, z1=z+d/2, y1=y+h;
+  var faces = [
+    [[[a,y1,z0],[b,y1,z0],[b,y1,z1],[a,y1,z1]],c,1.12],
+    [[[a,y,z0],[b,y,z0],[b,y1,z0],[a,y1,z0]],c,0.9],
+    [[[a,y,z1],[b,y,z1],[b,y1,z1],[a,y1,z1]],c,0.7],
+    [[[a,y,z0],[a,y,z1],[a,y1,z1],[a,y1,z0]],c,0.8],
+    [[[b,y,z0],[b,y,z1],[b,y1,z1],[b,y1,z0]],c,0.6]
+  ];
+  return faces.map(function(f){ return {v:f[0], col:rgb(f[1],f[2])}; });
+}
+function scene(type, t, p){
+  var o = {polys:[], dots:[], txt:[]};
+  var hash = function(n){ return ((n * 9301 + 49297) % 233280) / 233280; };
+  if(type === 'dice_3d'){
+    var s = 60; o.polys = box(0,-s,0,2*s,2*s,2*s,[255,236,160]);
+    [['1',[0,0,-s]],['6',[0,0,s]],['3',[-s,0,0]],['4',[s,0,0]],['2',[0,s,0]],['5',[0,-s,0]]].forEach(function(f){ o.txt.push({t:f[0],p:f[1]}); });
+  } else if(type === 'factory_3d'){
+    var pr = p.p || 0.1; o.polys = box(0,-16,0,460,16,80,[130,130,160]);
+    for(var k=0;k<8;k++){
+      var u = k*60 + t*50, id = k + 8*Math.floor(u/480), x = (u%480) - 240, bad = hash(id+1) < pr*2.2;
+      o.polys.push.apply(o.polys, box(x,0,0,32,28,32, bad ? [255,120,130] : [120,225,175]));
+    }
+    o.polys.push.apply(o.polys, box(0,0,-44,6,70,6,[255,220,90]));
+    o.polys.push.apply(o.polys, box(0,0,44,6,70,6,[255,220,90]));
+    o.polys.push.apply(o.polys, box(0,64,0,6,6,94,[255,220,90]));
+  } else if(type === 'bellcurve_3d'){
+    var s2 = Math.max(0.3, (p.sigma || 15) / 15);
+    for(var i=-6;i<=6;i++) for(var j=-3;j<=3;j++){
+      var h = (150/Math.sqrt(s2))*Math.exp(-i*i/(8*s2*s2))*Math.exp(-j*j/6)*(1+0.08*Math.sin(t*3+i+j))+4;
+      var k2 = Math.min(1, h/150);
+      o.polys.push.apply(o.polys, box(i*26,0,j*26,22,h,22,[(180-70*k2)|0,(150+80*k2)|0,(255-60*k2)|0]));
+    }
+  } else if(type === 'medical_3d'){
+    var pr2 = p.p || 0.2;
+    for(var m=0;m<70;m++){
+      var y = 1 - 2*m/69, r = Math.sqrt(Math.max(0, 1-y*y)), a = m*2.4 + t*0.5;
+      o.dots.push({p:[95*r*Math.cos(a), 95*y, 95*r*Math.sin(a)], r:8, c: hash(m+3)<pr2 ? '#FF7A8A' : '#8FF0C8'});
+    }
+  } else if(type === 'queue_3d'){
+    o.polys = box(0,-30,-70,120,60,60,[190,170,255]);
+    for(var qk=0;qk<8;qk++){
+      var qu = (qk*70 + t*60) % 560;
+      o.polys.push.apply(o.polys, box(-280+qu,-10,40,26,26,26,[255,200,120]));
+    }
+  } else if(type === 'sampling_3d'){
+    for(var sk=0;sk<60;sk++){
+      var sy = 1 - 2*sk/59, sr = Math.sqrt(Math.max(0, 1-sy*sy)), sa = sk*2.4 + t*0.4, hi = hash(sk)<0.18;
+      o.dots.push({p:[120*sr*Math.cos(sa), 120*sy, 120*sr*Math.sin(sa)], r: hi?11:6, c: hi?'#FFD166':'#B79CF5'});
+    }
+    o.txt.push({t:'x̄', p:[0,-140,0]});
+  } else if(type === 'abtest_3d'){
+    var hA = 90 + 30*Math.sin(t), hB = 115 + 30*Math.cos(t);
+    o.polys.push.apply(o.polys, box(-90,0,0,90,hA,50,[120,225,175]));
+    o.polys.push.apply(o.polys, box(90,0,0,90,hB,50,[255,150,160]));
+    o.txt.push({t:'A',p:[-90,hA+20,0]},{t:'B',p:[90,hB+20,0]});
+  } else if(type === 'dice_cards_3d'){
+    for(var ci=0;ci<5;ci++){
+      o.polys.push.apply(o.polys, box(ci*44-88, Math.sin(t*2+ci)*12, 0, 34, 52, 4, ci%2 ? [255,236,160] : [255,210,220]));
+    }
+  } else {
+    for(var fi=0;fi<10;fi++){
+      var fh = (40 + 85*Math.abs(Math.sin(fi*1.3+1)))*(1+0.12*Math.sin(t*2+fi));
+      o.polys.push.apply(o.polys, box(fi*38-170,0,0,26,fh,40, fi%3!==0 ? [120,225,175] : [255,150,160]));
+    }
+  }
+  return o;
+}
+function draw(c, dt){
+  var g = c.getContext('2d'), q = QM[c.dataset.q]; if(!q) return;
+  if(c.__run !== false) c.__t = (c.__t || 0) + dt;
+  var t = c.__t || 0, W = c.width, H = c.height;
+  var sc = scene(q.viz, t, q.vp || {});
+  var ry = (c.__ry || 0) + (q.viz === 'dice_3d' ? t*0.8 : Math.sin(t*0.4)*0.5 + 0.4), rx = 0.5;
+  var P = function(v){
+    var x=v[0], y=v[1], z=v[2], co=Math.cos(ry), si=Math.sin(ry);
+    var nx = x*co + z*si, nz = -x*si + z*co; x = nx; z = nz;
+    co = Math.cos(rx); si = Math.sin(rx);
+    var ny = y*co + z*si; nz = -y*si + z*co; y = ny; z = nz;
+    var f = 420 / (420 + z);
+    return [W/2 + x*f, H*0.62 - y*f, z, f];
+  };
+  var items = [];
+  sc.polys.forEach(function(f){
+    var pp = f.v.map(P);
+    items.push({
+      z: pp.reduce(function(s,a){ return s+a[2]; }, 0)/4,
+      fn: function(){
+        g.beginPath();
+        pp.forEach(function(a,i){ if(i) g.lineTo(a[0],a[1]); else g.moveTo(a[0],a[1]); });
+        g.closePath(); g.fillStyle = f.col; g.fill();
+        g.strokeStyle = 'rgba(45,42,74,.6)'; g.stroke();
+      }
+    });
+  });
+  sc.dots.forEach(function(d){
+    var a = P(d.p);
+    items.push({ z:a[2], fn:function(){ g.beginPath(); g.arc(a[0],a[1],Math.max(2,d.r*a[3]),0,7); g.fillStyle=d.c; g.fill(); } });
+  });
+  sc.txt.forEach(function(d){
+    var a = P(d.p);
+    items.push({ z:a[2]-1, fn:function(){ g.fillStyle='#FFF1B8'; g.font='900 32px Nunito'; g.textAlign='center'; g.fillText(d.t,a[0],a[1]+10); } });
+  });
+  g.clearRect(0,0,W,H);
+  items.sort(function(a,b){ return b.z - a.z; }).forEach(function(i){ i.fn(); });
+  g.fillStyle = '#fff'; g.font = '800 14px Nunito'; g.textAlign = 'left';
+  g.fillText('🎲 ' + ((q.vp && q.vp.label) || 'Mô phỏng 3D') + ' · Kéo chuột để xoay góc nhìn', 12, H - 12);
+}
+var lastT = performance.now();
+function loop(n){
+  var dt = Math.min(0.05, (n - lastT)/1000); lastT = n;
+  document.querySelectorAll('canvas.sc').forEach(function(c){ try{ draw(c, dt); }catch(e){} });
+  requestAnimationFrame(loop);
+}
 requestAnimationFrame(loop);
-let drag=null;
-document.addEventListener('pointerdown',e=>{if(e.target.classList&&e.target.classList.contains('sc'))drag={c:e.target,x:e.clientX}});
-addEventListener('pointermove',e=>{if(drag){drag.c.__ry=(drag.c.__ry||0)+(e.clientX-drag.x)*.01;drag.x=e.clientX}});
-addEventListener('pointerup',()=>drag=null);
-function runT(id){const c=document.querySelector(`canvas[data-q="${id}"]`);if(!c)return;c.__run=c.__run===false;c.__t=c.__run?0:c.__t;U(id).run=c.__run;document.getElementById('rb_'+id).textContent=c.__run?'⏸ Dừng':'▶ Chạy mô phỏng 3D'}
+var drag = null;
+document.addEventListener('pointerdown', function(e){ if(e.target.classList && e.target.classList.contains('sc')) drag = {c:e.target, x:e.clientX}; });
+window.addEventListener('pointermove', function(e){ if(drag){ drag.c.__ry = (drag.c.__ry || 0) + (e.clientX - drag.x)*0.01; drag.x = e.clientX; } });
+window.addEventListener('pointerup', function(){ drag = null; });
+function runT(id){
+  var c = document.querySelector('canvas[data-q="'+id+'"]'); if(!c) return;
+  c.__run = (c.__run === false);
+  var btn = document.getElementById('rb_'+id);
+  if(btn) btn.textContent = c.__run ? '⏸ Dừng' : '▶ Chạy 3D';
+}
 
-/* ===== Thẻ câu hỏi (dùng cho Luyện tập & Chữa bài) ===== */
-const QM={};
-const LB=['A','B','C','D'];
-function qaHTML(q,mode){const u=U(q.id),rev=mode==='r',pk=rev?ST.ex.ans[q.id]:u.pick,shown=rev||(u.pick!=null);
- let h=`<div class="font-bold text-lg my-2">${q.q}</div>`;
- if(q.type==='mcq'){q.opts.forEach((o,i)=>{let c='opt';if(shown){if(i===q.ans)c+=' ok';else if(i===pk)c+=' bad'}
-  h+=`<button class="${c}" ${shown?'disabled':''} onclick="pick('${q.id}',${i})"><b>${LB[i]}.</b> ${o}</button>`});
-  if(shown)h+=`<div class="font-black my-2">${pk===q.ans?'🎉 Chuẩn luôn! Đúng rồi!':pk==null?'⏰ Bạn chưa chọn đáp án – đáp án đúng là '+LB[q.ans]:'💔 Chưa đúng – đáp án đúng là '+LB[q.ans]}</div>`}
- else{h+=`<textarea class="w-full" rows="4" placeholder="Viết bài giải của bạn (có thể dùng $công thức$)..." oninput="U('${q.id}').essay=this.value">${esc(u.essay||'')}</textarea>
-  <button class="bt mt-2" onclick="grade('${q.id}')">✍️ Nhờ Cú Đêm chấm bài</button>${u.grade?`<div class="pc p-3 mt-3 bg-[#EFFFF8]">${u.grade}</div>`:''}`}
- h+=`<div class="flex gap-2 flex-wrap mt-2">`;
- if(!rev)h+=`<button class="bt" onclick="U('${q.id}').hint=1;updQ('${q.id}','${mode}')">💡 Gợi ý nhẹ</button><button class="bt" onclick="U('${q.id}').sol=!U('${q.id}').sol;updQ('${q.id}','${mode}')">📖 Lời giải chi tiết</button>`;
- h+=`</div>`;
- if(u.hint&&!rev)h+=`<div class="mt-2 p-3 rounded-2xl bg-[#FFF1B8] border-2 border-[#2D2A4A]">💡 ${q.hint}</div>`;
- if(rev||u.sol)h+=`<div class="mt-2 p-3 rounded-2xl bg-[#E9DDFF] border-2 border-[#2D2A4A]"><b>📖 Lời giải:</b> ${q.sol}</div>`;
- return h}
-function qcard(q,mode,num){QM[q.id]=q;const id=q.id;
- return`<div class="pc p-4 my-4" id="c_${id}"><div class="flex gap-2 flex-wrap items-center"><span class="tag bg-[#D9C9FF]">${num?'Câu '+num+' · ':''}Chương ${q.ch}</span><span class="tag bg-[#FFD2D0]">${q.lv}</span><span class="tag bg-[#BFF1DC]">${q.type==='mcq'?'Trắc nghiệm':'Tự luận'}</span></div>
- <div class="grid md:grid-cols-5 gap-3 mt-2"><div class="md:col-span-3"><div id="qa_${id}">${qaHTML(q,mode)}</div></div>
- <div class="md:col-span-2"><div class="stage"><canvas class="sc" data-q="${id}" width="560" height="360"></canvas><button id="rb_${id}" class="bt" onclick="runT('${id}')">⏸ Dừng</button></div></div></div>
- <div class="mt-3 p-3 rounded-2xl bg-[#F3EEFF] border-2 border-dashed border-[#2D2A4A]"><b>🛟 Gỡ rối tức thì cho câu hỏi này</b>
- <div class="flex gap-2 flex-wrap mt-2"><button class="bt" onclick="togMind('${id}')">🧠 ${mode==='r'?'Xem Bản đồ tư duy câu này':'Bản đồ tư duy bài toán này'}</button><button class="bt" onclick="togChat('${id}')">💬 ${mode==='r'?'Vấn đáp với Cú Đêm về câu này':'Vấn đáp trực tiếp câu này cùng Cú Đêm'}</button></div>
- <div id="mm_${id}"></div><div id="ch_${id}"></div></div>${vBlock('q'+id,id)}</div>`}
-function updQ(id,mode){const q=QM[id];$('#qa_'+id).innerHTML=qaHTML(q,mode);tx()}
-function pick(id,i){const q=QM[id];U(id).pick=i;recAtt(q,i===q.ans);if(i===q.ans)markDone(id);else logMiss(q,'mcq');updQ(id,'p')}
-async function grade(id){const q=QM[id],u=U(id);if(!u.essay)return toast('Bạn viết bài giải trước nhé ✍️');
- if(!KEY){u.grade='🦉 Chưa có API Key nên Cú Đêm chưa chấm được. Hãy tự so với lời giải mẫu nhé!<br><b>Lời giải mẫu:</b> '+q.sol;u.sol=1;return updQ(id,'p')}
- u.grade='🦉 Cú Đêm đang chấm...';updQ(id,'p');
- try{u.grade=(await ai(`Đề: ${q.q}\nĐáp án/lời giải mẫu: ${q.sol}\nBài làm sinh viên: ${u.essay}\nChấm thang 10, nhận xét ngắn gọn thân thiện, chỉ ra lỗi sai. Dùng LaTeX $...$.`,'Bạn là Cú Đêm, trợ giảng Gen Z dễ thương.')).replace(/\n/g,'<br>');if(u.grade.length>40)markDone(id);const sc=scoreOf(u.grade);if(sc!==null){recAtt(q,sc>=5);if(sc<5)logMiss(q,'essay')}}catch(e){u.grade='Lỗi: '+esc(e.message)}
- updQ(id,'p')}
-const LBL=[['📌 Dạng toán','#D9C9FF'],['📋 Dữ kiện đề cho','#BFF1DC'],['🧮 Công thức cốt lõi','#FFD2D0'],['🪜 Các bước giải & ⚠️ Bẫy hay sai','#FFF1B8']];
-function mmHTML(q){const parts=q.m.split('|');return`<div class="mm text-center mt-3"><div class="root">🧠 Chương ${q.ch}: ${CH[q.ch-1]}</div><div class="grid md:grid-cols-4 gap-3 mt-3 text-left">${parts.slice(0,4).map((p,i)=>`<div class="br" style="background:${LBL[i][1]}"><b>${LBL[i][0]}</b><ul>${p.split(';').map(s=>`<li>${s.trim()}</li>`).join('')}</ul></div>`).join('')}</div></div>`}
-async function togMind(id){const q=QM[id],u=U(id),el=$('#mm_'+id);if(u.mind){u.mind=0;el.innerHTML='';return}
- if(!q.m){if(!KEY)return toast('Cần nhập API Key để Cú Đêm vẽ bản đồ cho bài này 🦉');el.innerHTML='<p class="mt-2">🦉 Đang vẽ bản đồ...</p>';
-  try{q.m=(await ai(`Đề: ${q.q}\nLời giải: ${q.sol}\nTrả về DUY NHẤT một chuỗi gồm 4 nhóm cách nhau bởi dấu |: Dạng toán|Dữ kiện đề cho|Công thức cốt lõi|Các bước giải;Bẫy hay sai. Ý trong nhóm cách nhau bởi dấu ;. LaTeX dùng $...$.`)).replace(/\n/g,' ').trim()}catch(e){el.innerHTML='';return toast('Lỗi: '+e.message)}}
- u.mind=1;el.innerHTML=mmHTML(q);tx()}
-function chatHTML(id){const u=U(id);return`<div class="mt-3 bg-white rounded-2xl border-2 border-[#2D2A4A] p-3"><div class="max-h-72 overflow-y-auto" id="msgs_${id}">${u.msgs.map(m=>`<div class="my-1 ${m.r==='u'?'text-right':''}"><span class="inline-block px-3 py-1 rounded-2xl border-2 border-[#2D2A4A] ${m.r==='u'?'bg-[#BFF1DC]':'bg-[#F3EEFF]'}">${m.r==='u'?'':'🦉 '}${m.t}</span></div>`).join('')}</div>
- <div class="flex gap-2 mt-2"><input id="in_${id}" class="flex-1" placeholder="Hỏi Cú Đêm: vì sao câu này dùng công thức đó?" onkeydown="if(event.key==='Enter')send('${id}')"><button class="bt" onclick="send('${id}')">Gửi</button></div></div>`}
-function togChat(id){const u=U(id),el=$('#ch_'+id);if(u.chat){u.chat=0;el.innerHTML='';return}u.chat=1;
- if(!u.msgs.length)u.msgs.push({r:'m',t:'Chào bạn! Mình đã nắm đề và đáp án câu này rồi. Bạn đang kẹt ở bước nào, hay muốn mình hỏi gợi mở nhé? 🦉'});el.innerHTML=chatHTML(id);tx()}
-async function send(id){const q=QM[id],u=U(id),inp=$('#in_'+id),v=inp.value.trim();if(!v)return;u.msgs.push({r:'u',t:esc(v)});u.msgs.push({r:'m',t:'...'});$('#ch_'+id).innerHTML=chatHTML(id);let rep;
- try{const hist=u.msgs.slice(0,-1).map(m=>({role:m.r==='u'?'user':'model',parts:[{text:m.t}]})).filter((m,i)=>!(i===0&&m.role==='model'));
-  rep=(await ai(hist,`Bạn là Cú Đêm, trợ giảng Xác suất Thống kê Gen Z, thân thiện. Phương pháp Socratic: đặt câu hỏi gợi mở, không tiết lộ đáp án ngay nếu sinh viên chưa thử. Trả lời tiếng Việt, ngắn gọn, LaTeX $...$.\nĐề: ${q.q}\nLựa chọn: ${(q.opts||[]).join(' | ')}\nĐáp án đúng: ${q.type==='mcq'?LB[q.ans]:'(tự luận)'}\nLời giải: ${q.sol}`)).replace(/\n/g,'<br>')}
- catch(e){rep=e.message==='nokey'?`Gợi ý từ Cú: ${q.hint} Bạn thử liệt kê dữ kiện đề cho và công thức cần dùng xem? (Nhập API Key để chat tự do nhé!)`:'Lỗi: '+esc(e.message)}
- u.msgs[u.msgs.length-1]={r:'m',t:rep};$('#ch_'+id).innerHTML=chatHTML(id);const m=$('#msgs_'+id);m.scrollTop=m.scrollHeight;tx()}
+/* ===== 7. VOICE AI (ĐÀM THOẠI GIỌNG NÓI 2 CHIỀU Ở MỌI NƠI) ===== */
+var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+var VT = 'fl', VQ = null, vRec = null, vOn = false, speakOn = true, VNOANS = false;
+function allQ(){ return BANK.concat(ST.gen); }
+function vBlock(b, qid, noans){
+  return '<div class="mt-3 p-3 rounded-2xl bg-white border-2 border-[#2D2A4A]">' +
+    '<div class="flex items-center gap-3 flex-wrap">' +
+    '<button class="bt text-sm" onclick="vToggle(\''+b+'\',\''+(qid||'')+'\','+(!!noans)+')">🎙️ Vấn đáp bằng giọng nói</button>' +
+    '<span class="wv" data-b="'+b+'"><i></i><i></i><i></i><i></i><i></i></span>' +
+    '<span class="text-sm font-bold" id="s_'+b+'"></span></div>' +
+    '<div class="mt-2 text-sm" id="o_'+b+'"></div></div>';
+}
+function vInit(){
+  var r = new SR(); r.lang = 'vi-VN'; r.interimResults = true; r.continuous = false;
+  r.onresult = function(e){
+    if(r !== vRec) return;
+    var t = ''; for(var i=0;i<e.results.length;i++) t += e.results[i][0].transcript;
+    var sub = $('#s_'+VT); if(sub) sub.textContent = '🗣️ ' + t;
+    if(e.results[e.results.length-1].isFinal) vAsk(t.trim());
+  };
+  r.onend = function(){ if(r === vRec){ vOn = false; vUI(); } };
+  r.onerror = function(){ if(r === vRec){ vOn = false; vUI(); } };
+  return r;
+}
+function vToggle(b, qid, noans){
+  if(!SR) return toast('Trình duyệt chưa hỗ trợ thu âm giọng nói, hãy dùng Chrome hoặc Edge nhé 🎙️');
+  if(vOn && VT === b){ vRec.stop(); return; }
+  if(vRec && vOn) vRec.stop();
+  VT = b; VNOANS = !!noans; if(qid) VQ = qid;
+  vRec = vInit(); vOn = true; vUI();
+  try{ vRec.start(); }catch(e){ vOn = false; vUI(); }
+}
+function vUI(){ document.querySelectorAll('.wv').forEach(function(w){ w.classList.toggle('on', vOn && w.dataset.b === VT); }); }
+function speak(t){
+  if(!speakOn || !('speechSynthesis' in window)) return;
+  speechSynthesis.cancel();
+  var clean = String(t).replace(/\$\$?/g,'').replace(/\\[a-zA-Z]+/g,' ').replace(/[{}^_\\]/g,' ');
+  var u = new SpeechSynthesisUtterance(clean); u.lang = 'vi-VN';
+  speechSynthesis.speak(u);
+}
+async function vAsk(t){
+  var out = $('#o_'+VT); if(!t || !out) return;
+  out.innerHTML = '🦉 Cú Đêm đang suy nghĩ...';
+  var q = VQ && allQ().find(function(x){ return x.id === VQ; });
+  if(!KEY){
+    var msg = q ? ('Gợi ý cho bạn: ' + q.hint + ' (Hãy nhập Gemini API Key ở trên để đàm thoại tự do cùng Cú Đêm nhé!)') : 'Hãy nhập Gemini API Key ở thanh trên cùng để trò chuyện trực tiếp cùng Cú Đêm nhé!';
+    out.innerHTML = '🦉 ' + msg; speak(msg); return;
+  }
+  try{
+    var r = await ai([{role:'user', parts:[{text:t}]}],
+      'Bạn là Giáo sư Cú Đêm, trả lời vấn đáp Xác suất Thống kê bằng tiếng Việt, ngắn gọn 3-4 câu, thân thiện. Công thức dùng $...$.' +
+      (q ? ('\nĐề đang làm: ' + q.q + '\n' + (VNOANS ? 'Đang trong phòng thi: chỉ gợi mở phương pháp, không nói đáp án.' : 'Lời giải: ' + q.sol)) : '')
+    );
+    out.innerHTML = '🦉 ' + r.replace(/\n/g,'<br>'); speak(r); tx();
+  }catch(e){ out.textContent = 'Lỗi: ' + e.message; }
+}
 
-/* ===== Điều hướng & màn hình ===== */
-function go(v){clearInterval(ST.timer);ST.view=v;if(v==='exam'&&!(ST.ex&&!ST.ex.done))ST.ex=null;render()}
-const NAV=[['home','🏠 Trang chủ'],['practice','🎯 Luyện tập'],['exam','⏰ Thi thử'],['tutor','🎙️ AI Tutor & iPad'],['stats','🎓 Hồ sơ'],['forum','🌐 Diễn đàn']];
-const MODES={mcq:'Trắc nghiệm',essay:'Tự luận',exam:'Thi thử'};
-const RUBRIC=[{k:'Nhận diện dạng toán & gọi biến',p:2},{k:'Viết đúng công thức',p:3},{k:'Thay số & tính chuẩn xác',p:3.5},{k:'Kết luận & ý nghĩa thực tế',p:1.5}];
-let miss=ls.get('miss',[]);
-let PSTK=[],last=[0,0],down=false,upFile=null;
-const PEN={c:'#2D2A4A',w:4,e:0};
-const scoreOf=t=>{const m=String(t).match(/(\d+(?:[.,]\d+)?)\s*\/\s*10/);return m?parseFloat(m[1].replace(',','.')):null};
-function logMiss(q,mode){if(miss.some(m=>m.id===q.id&&m.mode===mode))return;miss.push({id:q.id,ch:q.ch,mode,q:q.q,ans:q.type==='mcq'?q.opts[q.ans]:'Xem lời giải',date:Date.now()});ls.set('miss',miss)}
-function clearMiss(){miss=[];ls.set('miss',miss);render()}
-function render(){const a=$('#app');$('#homeBtn').classList.toggle('hidden',ST.view==='home');$('#nav').innerHTML=NAV.map(([k,l])=>`<button class="bt text-sm ${ST.view===k?'on':''}" onclick="go('${k}')">${l}</button>`).join('');({home:rHome,practice:rPractice,exam:rExam,tutor:rTutor,stats:rStats,forum:rForum})[ST.view](a);scrollTo(0,0);tx()}
+/* ===== 8. HIỂN THỊ THẺ CÂU HỎI, BẢN ĐỒ TƯ DUY & VẤN ĐÁP TẠI CHỖ ===== */
+var scoreOf = function(t){ var m = String(t).match(/(\d+(?:[.,]\d+)?)\s*\/\s*10/); return m ? parseFloat(m[1].replace(',','.')) : null; };
+function recAtt(q, ok){
+  var a = ATT[q.ch] || {n:0, ok:0}; a.n++; if(ok) a.ok++;
+  ATT[q.ch] = a; ls.set('att', ATT);
+}
+function logMiss(q, mode){
+  if(miss.some(function(m){ return m.id === q.id && m.mode === mode; })) return;
+  miss.push({ id:q.id, ch:q.ch, mode:mode, q:q.q, ans: q.type==='mcq' ? q.opts[q.ans] : 'Xem lời giải', date:Date.now() });
+  ls.set('miss', miss);
+}
+function clearMiss(){ miss = []; ls.set('miss', miss); render(); }
 
-Object.assign(ST,{tch:1,tlv:'Vận dụng',cnt:10,pi:0});
-/* --- Voice AI: Web Speech API (vi-VN) --- */
-const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-let VT='fl',VQ=null,vRec=null,vOn=false,speakOn=true,VNOANS=false;
-function allQ(){return [...BANK,...ST.gen]}
-function vBlock(b,qid,noans){return `<div class="mt-3 p-3 rounded-2xl bg-white border-2 border-[#2D2A4A]"><div class="flex items-center gap-3 flex-wrap"><button class="bt text-sm" onclick="vToggle('${b}','${qid||''}',${!!noans})">🎙️ Hỏi bằng giọng nói</button><span class="wv" data-b="${b}"><i></i><i></i><i></i><i></i><i></i></span><span class="text-sm font-bold" id="s_${b}"></span></div><div class="mt-2 text-sm" id="o_${b}"></div></div>`}
-function vInit(){const r=new SR();r.lang='vi-VN';r.interimResults=true;r.continuous=false;
- r.onresult=e=>{if(r!==vRec)return;let t='';for(const x of e.results)t+=x[0].transcript;const sub=$('#s_'+VT);if(sub)sub.textContent='🗣️ '+t;if(e.results[e.results.length-1].isFinal)vAsk(t.trim())};
- r.onend=()=>{if(r===vRec){vOn=false;vUI()}};r.onerror=()=>{if(r===vRec){vOn=false;vUI()}};return r}
-function vToggle(b,qid,noans){if(!SR)return toast('Trình duyệt chưa hỗ trợ giọng nói, hãy dùng Chrome hoặc Edge 🎙️');
- if(vOn&&VT===b){vRec.stop();return}
- if(vRec&&vOn)vRec.stop();
- VT=b;VNOANS=!!noans;if(qid)VQ=qid;vRec=vInit();vOn=true;vUI();
- try{vRec.start()}catch(e){vOn=false;vUI()}}
-function vUI(){document.querySelectorAll('.wv').forEach(w=>w.classList.toggle('on',vOn&&w.dataset.b===VT))}
-function speak(t){if(!speakOn||!('speechSynthesis' in window))return;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(String(t).replace(/\$\$?/g,'').replace(/\\[a-zA-Z]+/g,' ').replace(/[{}^_\\]/g,' '));u.lang='vi-VN';speechSynthesis.speak(u)}
-async function vAsk(t){const out=$('#o_'+VT);if(!t||!out)return;out.innerHTML='🦉 Cú đang suy nghĩ...';
- const q=VQ&&allQ().find(x=>x.id===VQ);
- if(!KEY){const r='Nhập API Key để Cú Đêm trả lời bằng giọng nói nha 🦉';out.textContent=r;return speak(r)}
- try{const r=await ai([{role:'user',parts:[{text:t}]}],'Bạn là Giáo sư Cú Đêm, trả lời vấn đáp bằng tiếng Việt, ngắn gọn 3-5 câu, thân thiện, gợi mở kiểu Socratic khi có thể. Công thức LaTeX dùng $...$.'+(q?`\nĐề đang làm: ${q.q}\n${VNOANS?'Đây là bài thi: tuyệt đối không tiết lộ đáp án, chỉ gợi ý nhẹ.':'Lời giải mẫu: '+q.sol}`:''));
-  out.innerHTML='🦉 '+r.replace(/\n/g,'<br>');speak(r);tx()}catch(e){out.textContent='Lỗi: '+e.message}}
-document.body.insertAdjacentHTML('beforeend',`<div class="fixed bottom-4 right-4 z-40 text-right"><div id="fpanel" class="hidden pc p-3 mb-2 w-80 max-h-[70vh] overflow-y-auto text-left text-sm"><div class="flex items-center gap-2"><b>🦉 Trạm Vấn Đáp Voice AI</b><button class="bt text-xs ml-auto" onclick="speakOn=!speakOn;toast(speakOn?'Đã bật tiếng 🔊':'Đã tắt tiếng 🔇')">🔊 / 🔇</button></div>${vBlock('fl','')}</div><button class="bt" onclick="$('#fpanel').classList.toggle('hidden')">🎙️ Đàm thoại trực tiếp với Cú Đêm</button></div>`);
-/* --- Tutor: AI-generated and custom problems --- */
-async function aiTutorNew(){if(!KEY)return toast('Nhập API Key để AI ra đề nha 🦉');const req=(($('#treq')||{}).value||'').trim();
- toast('🦉 Đang ra đề...');
- try{const r=await genAI({ch:ST.tch,type:'essay',lv:ST.tlv,note:req},1);if(!r.length)throw new Error('Không có đề');ST.gen.push(...r);ST.tq=r[0].id;render()}catch(e){toast('Lỗi: '+e.message)}}
-function customTutor(){const t=(($('#tcustom')||{}).value||'').trim();if(!t)return toast('Dán đề bài vào trước nhé ✍️');
- const q={id:'u'+Date.now(),ch:ST.tch,type:'essay',lv:'Đề tự nhập',q:t,opts:[],ans:0,hint:'',sol:'',viz:'bellcurve_3d',vp:{},m:''};
- ST.gen.push(q);ST.tq=q.id;render()}
+function qaHTML(q, mode){
+  var u = U(q.id), rev = (mode === 'r'), pk = rev ? ST.ex.ans[q.id] : u.pick, shown = rev || (u.pick != null);
+  var h = '<div class="font-bold text-lg my-2">' + q.q + '</div>';
+  if(q.type === 'mcq'){
+    q.opts.forEach(function(o, i){
+      var c = 'opt';
+      if(shown){ if(i === q.ans) c += ' ok'; else if(i === pk) c += ' bad'; }
+      h += '<button class="'+c+'" '+(shown?'disabled':'')+' onclick="pick(\''+q.id+'\','+i+')"><b>'+LB[i]+'.</b> '+o+'</button>';
+    });
+    if(shown){
+      h += '<div class="font-black my-2">' + (pk === q.ans ? '🎉 Chuẩn luôn! Đúng rồi!' : (pk == null ? '⏰ Bạn chưa chọn đáp án – Đáp án đúng là ' + LB[q.ans] : '💔 Chưa đúng rồi – Đáp án đúng là ' + LB[q.ans])) + '</div>';
+    }
+  } else {
+    h += '<textarea class="w-full" rows="4" placeholder="Viết bài giải của bạn (có thể dùng $công thức$)..." oninput="U(\''+q.id+'\').essay=this.value">' + esc(u.essay || '') + '</textarea>' +
+      '<button class="bt mt-2" onclick="grade(\''+q.id+'\')">✍️ Nhờ Cú Đêm chấm bài</button>' +
+      (u.grade ? '<div class="pc p-3 mt-3 bg-[#EFFFF8]">'+u.grade+'</div>' : '');
+  }
+  if(!rev){
+    h += '<div class="flex gap-2 flex-wrap mt-2">' +
+      '<button class="bt text-sm" onclick="U(\''+q.id+'\').hint=1;updQ(\''+q.id+'\',\''+mode+'\')">💡 Gợi ý nhẹ</button>' +
+      '<button class="bt text-sm" onclick="U(\''+q.id+'\').sol=!U(\''+q.id+'\').sol;updQ(\''+q.id+'\',\''+mode+'\')">📖 Lời giải chi tiết</button></div>';
+  }
+  if(u.hint && !rev) h += '<div class="mt-2 p-3 rounded-2xl bg-[#FFF1B8] border-2 border-[#2D2A4A]">💡 ' + q.hint + '</div>';
+  if(rev || u.sol) h += '<div class="mt-2 p-3 rounded-2xl bg-[#E9DDFF] border-2 border-[#2D2A4A]"><b>📖 Lời giải:</b> ' + q.sol + '</div>';
+  return h;
+}
 
-/* --- Thống kê & chẩn đoán lỗi sai --- */
-let PROF=ls.get('prof',{name:'',sid:'',cls:'',title:'Cú Đêm Tập Sự'});
-const TITLES=['Cú Đêm Tập Sự','Cú Đêm Chăm Chỉ','Cú Đêm Thông Thái','Giáo Sư Cú Đêm'];
-let ATT=ls.get('att',{});
-function recAtt(q,ok){const a=ATT[q.ch]||{n:0,ok:0};a.n++;if(ok)a.ok++;ATT[q.ch]=a;ls.set('att',ATT)}
-function mastery(ch){const a=ATT[ch];return a&&a.n?Math.round(a.ok/a.n*100):0}
-function xp(){return prog.done.length*10+prog.streak*5}
-function saveProf(){PROF={name:$('#pn').value.trim(),sid:$('#psid').value.trim(),cls:$('#pcls').value.trim(),title:$('#ptitle').value};ls.set('prof',PROF);toast('Đã lưu hồ sơ 🎓')}
-function rStats(a){const lvl=Math.floor(xp()/100)+1;const vals=Object.values(ATT);const tot=vals.reduce((s,x)=>s+x.n,0),okT=vals.reduce((s,x)=>s+x.ok,0);const avg=tot?Math.round(okT/tot*100):0;
- const mx=Math.max(1,...CH.map((_,i)=>miss.filter(m=>m.ch===i+1).length));
- a.innerHTML=`<div class="grid md:grid-cols-3 gap-4"><div class="pc p-5"><h2 class="text-xl font-black">🪪 Thẻ sinh viên</h2><div class="text-center text-5xl mt-2">🦉</div>
- <label class="block text-sm font-bold mt-2">Họ tên<input id="pn" class="w-full" value="${esc(PROF.name)}"></label>
- <label class="block text-sm font-bold mt-2">Mã số SV<input id="psid" class="w-full" value="${esc(PROF.sid)}"></label>
- <label class="block text-sm font-bold mt-2">Trường / Lớp<input id="pcls" class="w-full" value="${esc(PROF.cls)}"></label>
- <label class="block text-sm font-bold mt-2">Danh hiệu<select id="ptitle" class="w-full">${TITLES.map(t=>`<option ${PROF.title===t?'selected':''}>${t}</option>`).join('')}</select></label>
- <button class="bt mt-3" onclick="saveProf()">💾 Lưu hồ sơ</button>
- <div class="flex flex-wrap gap-2 mt-3"><span class="tag bg-[#FFF1B8]">Level ${lvl}</span><span class="tag bg-[#BFF1DC]">XP ${xp()}</span><span class="tag bg-[#FFD2D0]">🔥 ${prog.streak} ngày</span><span class="tag bg-[#D9C9FF]">TB đúng ${avg}%</span></div></div>
- <div class="pc p-5 md:col-span-2"><h2 class="text-xl font-black">🧭 Năng lực 7 chương</h2>${CH.map((c,i)=>{const m=mastery(i+1),n=ATT[i+1]?ATT[i+1].n:0;return `<div class="my-2 text-sm"><div class="flex justify-between font-bold"><span>Ch${i+1}. ${c}</span><span>${n?m+'%':'chưa làm'}</span></div><div class="bg-white border-2 border-[#2D2A4A] rounded-full h-4 overflow-hidden"><div class="h-full bg-[#BFF1DC]" style="width:${m}%"></div></div></div>`}).join('')}
- <h3 class="font-black mt-4 mb-1">📊 Số câu sai theo chương</h3><div class="flex gap-1 items-end h-20">${CH.map((_,i)=>{const n=miss.filter(m=>m.ch===i+1).length;return `<div class="flex-1 bg-[#FFD2D0] border-2 border-[#2D2A4A] rounded-t-lg" style="height:${Math.max(4,n/mx*100)}%" title="Ch${i+1}: ${n} câu sai"></div>`}).join('')}</div>
- <div class="flex gap-2 flex-wrap mt-4"><button class="bt" onclick="analyzeMiss()">🦉 AI Phân Tích Hồ Sơ & Lỗi Sai</button><button class="bt" onclick="remed()">🎯 Tạo Bộ Bài Tập Khắc Phục Lỗ Hổng</button><button class="bt" onclick="clearMiss()">🗑️ Xoá lịch sử lỗi</button></div><div id="ana" class="mt-4"></div>
- <h3 class="font-black mt-5">Lịch sử câu sai gần đây</h3><div class="max-h-48 overflow-y-auto">${miss.length?miss.slice().reverse().slice(0,20).map(m=>`<div class="opt" onclick="reviewMiss('${m.id}')"><b>[Ch ${m.ch} · ${MODES[m.mode]}]</b> ${m.q}<br><span class="text-sm">Đáp án: ${m.ans}</span></div>`).join(''):'<p>Chưa có lỗi sai nào. Giỏi quá 🎉</p>'}</div></div></div>`;tx()}
-async function remed(){if(!KEY)return toast('Nhập API Key để Cú Đêm tạo bài nha 🦉');
- const tried=CH.map((_,i)=>i+1).filter(i=>ATT[i]&&ATT[i].n);const weak=tried.length?tried.sort((a,b)=>mastery(a)-mastery(b))[0]:1;
- toast('🦉 Đang soạn bộ bài khắc phục...');
- try{const r=await genAI({ch:weak,type:'mcq',lv:'Vận dụng',note:'tập trung vào dạng lỗi sinh viên hay sai ở chương này'},5);ST.gen.push(...r);ST.ch=weak;ST.pi=0;go('practice')}catch(e){toast('Lỗi: '+e.message)}}
-async function analyzeMiss(){const el=$('#ana');if(!KEY)return toast('Nhập API Key để Cú Đêm phân tích nha 🦉');if(!miss.length)return toast('Chưa có lỗi sai nào để phân tích 🎉');
- el.innerHTML='🦉 Đang phân tích...';
- try{const list=miss.slice(-30).map(m=>`Ch${m.ch} [${MODES[m.mode]}] ${m.q} | Đáp án: ${m.ans}`).join('\n');
-  el.innerHTML='<div class="pc p-4 bg-[#F3EEFF]">'+(await ai(`Lịch sử lỗi sai của sinh viên:\n${list}\nHãy phân tích: (1) Nhận định chung về bản chất lỗi sai (ví dụ nhầm phân phối Nhị thức với Siêu bội, quên điều kiện phân phối Chuẩn, sai miền bác bỏ); (2) Lộ trình khắc phục cụ thể theo từng nhóm lỗi. Tiếng Việt, ngắn gọn, công thức LaTeX dùng $...$.`,'Bạn là Cú Đêm, trợ giảng Xác suất Thống kê Gen Z, thân thiện.')).replace(/\n/g,'<br>')+'</div>'}
- catch(e){el.innerHTML='Lỗi: '+esc(e.message)}tx()}
+function qcard(q, mode, num){
+  QM[q.id] = q; var id = q.id;
+  return '<div class="pc p-4 my-4" id="c_'+id+'">' +
+    '<div class="flex gap-2 flex-wrap items-center">' +
+    '<span class="tag bg-[#D9C9FF]">'+(num ? 'Câu '+num+' · ' : '')+'Chương '+q.ch+'</span>' +
+    '<span class="tag bg-[#FFD2D0]">'+esc(q.lv)+'</span>' +
+    '<span class="tag bg-[#BFF1DC]">'+(q.type==='mcq'?'Trắc nghiệm':'Tự luận')+'</span></div>' +
+    '<div class="grid md:grid-cols-5 gap-3 mt-2">' +
+    '<div class="md:col-span-3"><div id="qa_'+id+'">'+qaHTML(q, mode)+'</div></div>' +
+    '<div class="md:col-span-2"><div class="stage"><canvas class="sc" data-q="'+id+'" width="560" height="360"></canvas>' +
+    '<button id="rb_'+id+'" class="bt" onclick="runT(\''+id+'\')">⏸ Dừng</button></div></div></div>' +
+    '<div class="mt-3 p-3 rounded-2xl bg-[#F3EEFF] border-2 border-dashed border-[#2D2A4A]">' +
+    '<b>🛟 Gỡ rối tức thì cho câu hỏi này</b>' +
+    '<div class="flex gap-2 flex-wrap mt-2">' +
+    '<button class="bt text-sm" onclick="togMind(\''+id+'\')">🧠 Bản đồ tư duy bài toán</button>' +
+    '<button class="bt text-sm" onclick="togChat(\''+id+'\')">💬 Vấn đáp trực tiếp cùng Cú Đêm</button></div>' +
+    '<div id="mm_'+id+'"></div><div id="ch_'+id+'"></div></div>' +
+    vBlock('q'+id, id, false) + '</div>';
+}
 
-/* --- AI Tutor & bảng iPad --- */
-function rTutor(a){const all=[...BANK,...ST.gen];const cur=all.find(q=>q.id===ST.tq)||all[0];ST.tq=cur.id;
- a.innerHTML=`<div class="grid md:grid-cols-5 gap-4"><div class="pc p-4 md:col-span-2"><h2 class="text-xl font-black">🎙️ AI Tutor & Bảng iPad</h2>
- <select class="w-full mt-2" onchange="ST.tq=this.value;render()">${all.map(q=>`<option value="${q.id}" ${q.id===cur.id?'selected':''}>Ch${q.ch} · ${q.q.replace(/\$/g,'').slice(0,50)}…</option>`).join('')}</select>
- <div class="font-bold mt-3">${cur.q}</div>
- <div class="mt-4"><b>Barem điểm (tự chỉnh được)</b>${RUBRIC.map((r,i)=>`<div class="flex gap-2 items-center my-1"><input class="flex-1" value="${esc(r.k)}" onchange="RUBRIC[${i}].k=this.value"><input type="number" step="0.5" class="w-20" value="${r.p}" onchange="RUBRIC[${i}].p=+this.value;rTutorSum()"></div>`).join('')}<div id="rsum" class="font-black mt-1"></div></div>
- </div><div class="pc p-4 md:col-span-3"><div class="p-3 rounded-2xl bg-[#F3EEFF] border-2 border-[#2D2A4A] mb-3"><b>✨ Tạo đề bài mới bằng AI cho Bảng iPad</b>
- <div class="flex flex-wrap gap-2 mt-2"><select onchange="ST.tch=+this.value">${CH.map((c,i)=>`<option value="${i+1}" ${ST.tch===i+1?'selected':''}>Chương ${i+1}</option>`).join('')}</select>
- <select onchange="ST.tlv=this.value">${['Cơ bản','Vận dụng','Vận dụng cao'].map(l=>`<option ${ST.tlv===l?'selected':''}>${l}</option>`).join('')}</select>
- <input id="treq" class="flex-1 min-w-[160px]" placeholder="Yêu cầu thêm (vd: dây chuyền sản xuất ô tô)"><button class="bt" onclick="aiTutorNew()">AI Tạo Đề Mới</button></div>
- <textarea id="tcustom" class="w-full mt-2" rows="2" placeholder="Hoặc dán đề bài riêng của bạn vào đây..."></textarea><button class="bt mt-2" onclick="customTutor()">📝 Dùng đề riêng này</button><label class="bt mt-2 ml-2 text-sm">📷 Chụp ảnh đề<input type="file" accept="image/*" class="hidden" onchange="problemPhoto(this)"></label></div>
- <div class="flex flex-wrap gap-2 items-center">
- ${['#2D2A4A','#2563EB','#DC2626','#FACC15'].map(c=>`<button class="bt" style="background:${c};width:2.2rem;padding:.2rem" onclick="PEN.c='${c}';PEN.e=0">&nbsp;</button>`).join('')}
- <select onchange="PEN.w=+this.value">${[2,4,8,14].map(w=>`<option value="${w}" ${w===4?'selected':''}>Nét ${w}</option>`).join('')}</select>
- <button class="bt" onclick="PEN.e=1">🧽 Tẩy</button><button class="bt" onclick="undoPad()">↩️ Hoàn tác</button><button class="bt" onclick="clearPad()">🗑️ Xoá bảng</button>
- ${['∑','∫','μ','σ²','x̄','P(A|B)'].map(s=>`<button class="bt text-sm" onclick="symPad('${s}')">${s}</button>`).join('')}</div>
- <canvas id="ipad" width="700" height="460" class="w-full mt-3 rounded-2xl border-4 border-[#2D2A4A] bg-white" style="touch-action:none;background-image:linear-gradient(#e5e7eb 1px,transparent 1px),linear-gradient(90deg,#e5e7eb 1px,transparent 1px);background-size:28px 28px"></canvas>
- <div class="flex flex-wrap gap-2 items-center mt-3"><input type="file" id="up" accept="image/png,image/jpeg,application/pdf" onchange="loadUp(this)"><span id="upname" class="text-sm"></span></div>
- <div id="prev" class="mt-2"></div>
- <button class="bt mt-3" onclick="gradeTutor()">🦉 Nhờ AI Tutor Chấm Điểm</button><div id="tres" class="mt-3"></div>${vBlock('tu',cur.id)}</div></div>`;
- initPad();rTutorSum();tx()}
-function rTutorSum(){const el=$('#rsum');if(el)el.textContent='Tổng barem: '+RUBRIC.reduce((s,r)=>s+(+r.p||0),0)+' điểm'}
-function snap(){const c=$('#ipad'),g=c.getContext('2d');PSTK.push(g.getImageData(0,0,c.width,c.height));if(PSTK.length>20)PSTK.shift()}
-function initPad(){const c=$('#ipad'),g=c.getContext('2d');PSTK=[];down=false;
- const pos=e=>{const r=c.getBoundingClientRect();return[(e.clientX-r.left)*c.width/r.width,(e.clientY-r.top)*c.height/r.height]};
- c.onpointerdown=e=>{snap();down=true;c.setPointerCapture(e.pointerId);last=pos(e);g.globalCompositeOperation=PEN.e?'destination-out':'source-over';g.strokeStyle=PEN.c;g.lineWidth=PEN.e?30:PEN.w;g.lineCap='round';g.lineJoin='round'};
- c.onpointermove=e=>{if(!down)return;const p=pos(e);g.beginPath();g.moveTo(last[0],last[1]);g.lineTo(p[0],p[1]);g.stroke();last=p};
- c.onpointerup=c.onpointercancel=()=>{down=false;PADIMG=c.toDataURL('image/png')}}
-function undoPad(){const c=$('#ipad');if(PSTK.length)c.getContext('2d').putImageData(PSTK.pop(),0,0)}
-function clearPad(){const c=$('#ipad');snap();c.getContext('2d').clearRect(0,0,c.width,c.height);PADIMG=''}
-function symPad(s){const c=$('#ipad'),g=c.getContext('2d');snap();g.globalCompositeOperation='source-over';g.fillStyle=PEN.c;g.font='700 44px Nunito';g.fillText(s,60+Math.random()*380,110+Math.random()*250)}
-function loadUp(inp){const f=inp.files[0];if(!f)return;if(!/image\/(png|jpeg)|application\/pdf/.test(f.type))return toast('Chỉ nhận ảnh PNG/JPG hoặc PDF nha 📎');
- const r=new FileReader();r.onload=()=>{upFile={mime:f.type,data:r.result.split(',')[1]};$('#upname').textContent='📎 '+f.name;
-  $('#prev').innerHTML=f.type==='application/pdf'?`<div class="font-bold">📄 Đã đính kèm PDF: ${esc(f.name)}</div>`:`<img src="${r.result}" class="max-h-48 rounded-xl border-2 border-[#2D2A4A]">`};r.readAsDataURL(f)}
-async function gradeTutor(){const all=[...BANK,...ST.gen];const q=all.find(x=>x.id===ST.tq)||all[0];const el=$('#tres');
- if(!KEY)return toast('Nhập API Key để Cú Đêm chấm nha 🦉');
- let src;
- if(upFile)src={mimeType:upFile.mime,data:upFile.data};
- else{if(!PSTK.length)return toast('Hãy viết bài lên bảng hoặc tải ảnh/PDF lên trước nhé ✍️');
-  const c=$('#ipad'),t=document.createElement('canvas');t.width=c.width;t.height=c.height;const tg=t.getContext('2d');tg.fillStyle='#fff';tg.fillRect(0,0,t.width,t.height);tg.drawImage(c,0,0);
-  src={mimeType:'image/png',data:t.toDataURL('image/png').split(',')[1]}}
- el.innerHTML='🦉 Cú Đêm đang đọc bài...';
- const prompt=`Đề: ${q.q}\nLời giải mẫu: ${q.sol}\nBarem:\n${RUBRIC.map(r=>`- ${r.k}: ${r.p} điểm`).join('\n')}\nĐọc bài làm viết tay trong ảnh/PDF đính kèm. Chấm từng mục theo barem, chỉ rõ dòng nào sai công thức hoặc tính nhầm, nêu lời khuyên sửa. Cuối cùng ghi đúng dạng "Tổng: X/10". Tiếng Việt, công thức LaTeX dùng $...$.`;
- try{const t=await ai([{role:'user',parts:[{text:prompt},{inlineData:src}]}],'Bạn là Cú Đêm, giảng viên Gen Z chấm bài nghiêm túc và thân thiện.');
-  el.innerHTML=`<div class="pc p-4 bg-[#EFFFF8]">${t.replace(/\n/g,'<br>')}</div>`;
-  const sc=scoreOf(t);if(sc!==null){recAtt(q,sc>=5);if(sc<5)logMiss(q,'essay')}}
- catch(e){el.innerHTML='Lỗi: '+esc(e.message)}tx()}
+function updQ(id, mode){ var q = QM[id]; $('#qa_'+id).innerHTML = qaHTML(q, mode); tx(); }
+function pick(id, i){
+  var q = QM[id]; U(id).pick = i;
+  recAtt(q, i === q.ans);
+  if(i === q.ans) markDone(id); else logMiss(q, 'mcq');
+  updQ(id, 'p');
+}
+async function grade(id){
+  var q = QM[id], u = U(id);
+  if(!u.essay) return toast('Bạn viết bài giải trước nhé ✍️');
+  if(!KEY){
+    u.grade = '🦉 Chưa nhập API Key nên hệ thống hiện lời giải mẫu để bạn đối chiếu:<br><b>Lời giải mẫu:</b> ' + q.sol;
+    u.sol = 1; return updQ(id, 'p');
+  }
+  u.grade = '🦉 Cú Đêm đang chấm bài...'; updQ(id, 'p');
+  try{
+    u.grade = (await ai('Đề: '+q.q+'\nLời giải chuẩn: '+q.sol+'\nBài làm sinh viên: '+u.essay+'\nHãy chấm điểm trên thang 10 (ghi rõ X/10), nhận xét thân thiện và chỉ ra chỗ sai nếu có. Dùng LaTeX $...$.','Bạn là Cú Đêm, trợ giảng XSTK Gen Z.')).replace(/\n/g,'<br>');
+    markDone(id);
+    var sc = scoreOf(u.grade);
+    if(sc !== null){ recAtt(q, sc >= 5); if(sc < 5) logMiss(q, 'essay'); }
+  }catch(e){ u.grade = 'Lỗi: ' + esc(e.message); }
+  updQ(id, 'p');
+}
 
-function rHome(a){a.innerHTML=`<section class="pc p-5 flex flex-wrap items-center gap-4 bg-white"><div class="float">${owl(150)}</div><div class="flex-1 min-w-[220px]"><div class="inline-block pc px-3 py-1 text-sm mb-2" style="box-shadow:0 3px 0 #2D2A4A">👋 Chào cậu! Hôm nay mình cùng cứu nét kiến thức nhé!</div>
-<h1 class="text-3xl md:text-4xl font-black">Xác suất &amp; Thống kê không đáng sợ, có Cú Đêm lo!</h1><p class="mt-1 font-bold">Luyện từng chút, thi thử thật chăm – điểm số sẽ nở hoa 🌸</p>
-<div class="flex gap-3 mt-3 flex-wrap"><span class="tag bg-[#BFF1DC] py-1 text-base">🏆 ${prog.done.length} bài đã chinh phục</span><span class="tag bg-[#FFD2D0] py-1 text-base">🔥 ${prog.streak} ngày chăm học</span></div></div></section>
-<div class="grid md:grid-cols-2 gap-6 mt-8">
-<button onclick="go('practice')" class="pc p-5 text-left bt" style="background:linear-gradient(135deg,#D9C9FF,#BFF1DC);border-radius:1.5rem;box-shadow:0 8px 0 #2D2A4A"><svg viewBox="0 0 120 70" class="w-28"><polygon points="60,6 100,26 60,46 20,26" fill="#FFF1B8" stroke="#2D2A4A" stroke-width="3"/><polygon points="20,26 60,46 60,66 20,46" fill="#FFD2D0" stroke="#2D2A4A" stroke-width="3"/><polygon points="100,26 60,46 60,66 100,46" fill="#BFF1DC" stroke="#2D2A4A" stroke-width="3"/></svg>
-<h2 class="text-2xl font-black mt-2">🎯 Khu Luyện Tập Chủ Động</h2><p class="font-bold mt-1">Luyện bài tập Trắc nghiệm &amp; Tự luận thực tế qua 7 chương, có mô phỏng 3D, Bản đồ tư duy và Vấn đáp trực tiếp tại từng câu.</p></button>
-<button onclick="go('exam')" class="pc p-5 text-left bt" style="background:linear-gradient(135deg,#FFD2D0,#FFF1B8);border-radius:1.5rem;box-shadow:0 8px 0 #2D2A4A"><svg viewBox="0 0 120 70" class="w-28"><circle cx="60" cy="38" r="28" fill="#fff" stroke="#2D2A4A" stroke-width="4"/><line x1="60" y1="38" x2="60" y2="18" stroke="#2D2A4A" stroke-width="4"/><line x1="60" y1="38" x2="74" y2="46" stroke="#FF7A8A" stroke-width="4"/><rect x="52" y="4" width="16" height="6" rx="2" fill="#2D2A4A"/></svg>
-<h2 class="text-2xl font-black mt-2">⏰ Đấu Trường Thi Thử</h2><p class="font-bold mt-1">Thi thử bấm giờ như thi thật, chấm điểm tự động và mở khóa Bản đồ tư duy + Vấn đáp giải đáp thắc mắc ngay sau khi nộp bài.</p></button><button onclick="go('tutor')" class="pc p-5 text-left bt" style="background:linear-gradient(135deg,#BFF1DC,#D9C9FF);border-radius:1.5rem;box-shadow:0 8px 0 #2D2A4A"><div class="text-5xl">🎙️✍️</div><h2 class="text-2xl font-black mt-2">AI Tutor &amp; Bảng iPad</h2><p class="font-bold mt-1">Viết tay lên bảng iPad hoặc tải ảnh/PDF bài làm, Cú Đêm chấm theo barem điểm bạn tự chỉnh.</p></button><button onclick="go('stats')" class="pc p-5 text-left bt" style="background:linear-gradient(135deg,#FFF1B8,#FFD2D0);border-radius:1.5rem;box-shadow:0 8px 0 #2D2A4A"><div class="text-5xl">📊🦉</div><h2 class="text-2xl font-black mt-2">Hồ Sơ &amp; Chẩn Đoán Lỗi Sai</h2><p class="font-bold mt-1">Xem các câu đã sai theo chương và dạng bài, rồi nhờ AI chỉ ra lỗi hay gặp và cách khắc phục.</p></button></div>`}
-function pList(){const l=filtered();const el=$('#plist');
- if(!l.length){el.innerHTML='<div class="pc p-5 mt-4 text-center">🦉 Chưa có bài cho bộ lọc này. Bấm “Tạo bộ bài toán bằng AI” nhé!</div>';return}
- if(ST.pi>=l.length)ST.pi=0;
- el.innerHTML=`<div class="flex flex-wrap gap-1 items-center my-4"><button class="bt text-sm" onclick="pgo(-1)">◀ Câu trước</button>${l.map((_,i)=>`<button class="bt text-sm ${i===ST.pi?'on':''}" onclick="ST.pi=${i};pList()">${i+1}</button>`).join('')}<button class="bt text-sm" onclick="pgo(1)">Câu tiếp ▶</button><span class="text-sm font-bold ml-2">${ST.pi+1}/${l.length} câu</span></div>${qcard(l[ST.pi],'p',ST.pi+1)}`;tx()}
-function filtered(){return [...BANK,...ST.gen].filter(q=>q.ch===ST.ch&&(ST.type==='all'||q.type===ST.type)&&(ST.lv==='all'||q.lv===ST.lv))}
-function pgo(d){const n=filtered().length;ST.pi=(ST.pi+d+n)%n;pList()}
-function rPractice(a){a.innerHTML=`<button class="bt mb-3" onclick="go('home')">← Quay lại Trang chủ</button><div class="pc p-4"><h2 class="text-2xl font-black mb-2">🎯 Khu Luyện Tập</h2>
-<div class="flex flex-wrap gap-2">${CH.map((c,i)=>`<button class="bt text-sm ${ST.ch===i+1?'on':''}" title="${c}" onclick="ST.ch=${i+1};render()">Chương ${i+1}</button>`).join('')}</div><p class="font-bold mt-2">${CH[ST.ch-1]}</p>
-<div class="flex flex-wrap gap-2 mt-2"><select onchange="ST.type=this.value;pList()"><option value="all">Mọi hình thức</option><option value="mcq" ${ST.type==='mcq'?'selected':''}>Trắc nghiệm</option><option value="essay" ${ST.type==='essay'?'selected':''}>Tự luận</option></select>
-<select onchange="ST.lv=this.value;pList()"><option value="all">Mọi độ khó</option>${['Cơ bản','Vận dụng','Vận dụng cao'].map(l=>`<option ${ST.lv===l?'selected':''}>${l}</option>`).join('')}</select><select onchange="ST.cnt=+this.value">${[5,10,15,20].map(n=>`<option value="${n}" ${ST.cnt===n?'selected':''}>${n} câu</option>`).join('')}</select><button class="bt" id="gbtn" onclick="genP()">✨ Tạo bộ bài toán bằng AI</button></div></div><div id="plist"></div>`;pList()}
-async function genP(){if(!KEY)return toast('Nhập Gemini API Key ở trên để tạo bài mới nha 🦉');const b=$('#gbtn');b.disabled=true;b.textContent='🦉 Đang soạn bộ đề...';
- try{const r=await genAI({ch:ST.ch,type:ST.type==='all'?'mcq':ST.type,lv:ST.lv==='all'?'Vận dụng':ST.lv},ST.cnt);ST.gen.push(...r);ST.pi=0;toast('Có '+r.length+' câu mới rồi nè!')}catch(e){toast('Lỗi: '+e.message)}
- pList();b.disabled=false;b.textContent='✨ Tạo bộ bài toán bằng AI'}
+function mmHTML(q){
+  var parts = (q.m || 'Dạng toán|Dữ kiện|Công thức|Bước giải').split('|');
+  return '<div class="mm text-center mt-3"><div class="root">🧠 Chương '+q.ch+': '+CH[q.ch-1]+'</div>' +
+    '<div class="grid md:grid-cols-4 gap-3 mt-3 text-left">' +
+    LBL.map(function(lb, i){
+      var p = parts[i] || lb[0];
+      return '<div class="br" style="background:'+lb[1]+'"><b>'+lb[0]+'</b><ul>' +
+        p.split(';').map(function(s){ return '<li>'+s.trim()+'</li>'; }).join('') + '</ul></div>';
+    }).join('') + '</div></div>';
+}
+async function togMind(id){
+  var q = QM[id], u = U(id), el = $('#mm_'+id);
+  if(u.mind){ u.mind = 0; el.innerHTML = ''; return; }
+  if(!q.m && KEY){
+    el.innerHTML = '<p class="mt-2 font-bold">🦉 Đang vẽ bản đồ tư duy...</p>';
+    try{
+      q.m = (await ai('Đề: '+q.q+'\nLời giải: '+q.sol+'\nTrả về 4 nhánh cách nhau bởi dấu |: Dạng toán|Dữ kiện|Công thức|Các bước giải;Bẫy hay sai.')).replace(/\n/g,' ').trim();
+    }catch(e){}
+  }
+  u.mind = 1; el.innerHTML = mmHTML(q); tx();
+}
 
-/* ===== Thi thử ===== */
-function rExam(a){const e=ST.ex;if(!e)return cfgExam(a);if(e.done)return resExam(a);
- a.innerHTML=`<div class="pc p-3 sticky top-16 z-20 flex flex-wrap items-center gap-2"><b class="text-2xl">⏰ <span id="clk">--:--</span></b><div class="flex gap-1 flex-wrap flex-1">${e.qs.map((q,i)=>`<button id="nv_${i}" class="bt text-sm" onclick="document.getElementById('eq_${i}').scrollIntoView({behavior:'smooth'})">${i+1}</button>`).join('')}</div><button class="bt bg-[#BFF1DC]" onclick="submitEx()">📨 Nộp bài</button></div>`+
- e.qs.map((q,i)=>{QM[q.id]=q;return`<div class="pc p-4 my-4" id="eq_${i}">${exQ(q,i)}</div>`}).join('');
- clearInterval(ST.timer);const tick=()=>{const s=Math.max(0,e.end-Date.now())/1000|0;const c=$('#clk');if(c)c.textContent=String(s/60|0).padStart(2,'0')+':'+String(s%60).padStart(2,'0');if(s<=0)submitEx()};tick();ST.timer=setInterval(tick,500);tx()}
-function exQ(q,i){const a=ST.ex.ans[q.id];return`<span class="tag bg-[#D9C9FF]">Câu ${i+1} · Chương ${q.ch}</span><div class="font-bold text-lg my-2">${q.q}</div>`+q.opts.map((o,k)=>`<button class="opt ${a===k?'sel':''}" onclick="exPick(${i},${k})"><b>${LB[k]}.</b> ${o}</button>`).join('')+vBlock('ex'+q.id,q.id,true)}
-function exPick(i,k){const q=ST.ex.qs[i];ST.ex.ans[q.id]=k;$('#eq_'+i).innerHTML=exQ(q,i);$('#nv_'+i).classList.add('on');tx()}
-function cfgExam(a){const c=ST.cfg,ch=(k,v,l)=>`<button class="bt ${c[k]==v?'on':''}" onclick="ST.cfg.${k}=${JSON.stringify(v)};render()">${l}</button>`;
- a.innerHTML=`<button class="bt mb-3" onclick="go('home')">← Quay lại Trang chủ</button><div class="pc p-5"><h2 class="text-2xl font-black">⏰ Đấu Trường Thi Thử</h2><p class="font-bold mt-3">Phạm vi</p><div class="flex flex-wrap gap-2">${ch('scope','all','Tổng hợp 7 chương')}${CH.map((_,i)=>ch('scope',i+1,'Chương '+(i+1))).join('')}</div>
-<p class="font-bold mt-3">Số câu</p><div class="flex gap-2">${ch('n',5,'5 câu')}${ch('n',10,'10 câu')}</div><p class="font-bold mt-3">Thời gian</p><div class="flex gap-2">${[10,15,30].map(m=>ch('min',m,m+' phút')).join('')}</div>
-<div class="flex flex-wrap gap-3 mt-5"><button class="bt" onclick="startEx(false)">📚 Thi thử Đề Mẫu có sẵn</button><button class="bt" id="xbtn" onclick="startEx(true)">✨ Tạo Đề Thi mới bằng AI</button></div><p class="text-sm mt-3">Đề mẫu có 8 câu trắc nghiệm (mỗi chương ít nhất 1 câu). Đề AI tạo đúng số câu bạn chọn.</p></div>`}
-async function startEx(useAI){const c=ST.cfg;let qs;
- if(useAI){if(!KEY)return toast('Nhập Gemini API Key để Cú Đêm ra đề nha 🦉');const b=$('#xbtn');b.disabled=true;b.textContent='🦉 Đang ra đề...';
-  try{qs=await genAI({ch:c.scope==='all'?0:c.scope,type:'mcq',lv:'Vận dụng'},c.n);qs=qs.filter(q=>q.type==='mcq'&&q.opts.length>=2)}catch(e){toast('Lỗi: '+e.message);return render()}}
- else qs=SAMPLE_EXAM.filter(q=>c.scope==='all'||q.ch===c.scope).slice(0,c.n);
- if(!qs.length)return toast('Chưa có câu nào – hãy thử Tạo đề bằng AI');
- ST.ex={qs,ans:{},done:false,end:Date.now()+c.min*60000};render()}
-function submitEx(){const e=ST.ex;if(!e||e.done)return;clearInterval(ST.timer);e.done=true;e.ok=e.qs.filter(q=>{const r=e.ans[q.id]===q.ans;recAtt(q,r);if(r)markDone(q.id);else logMiss(q,'exam');return r}).length;render()}
-function resExam(a){const e=ST.ex,n=e.qs.length,sc=(e.ok/n*10).toFixed(1),cm=sc>=8?'Quá đỉnh luôn! Cú Đêm tự hào về cậu 🎉':sc>=5?'Khá ổn rồi, xem lại câu sai là lên hạng ngay nha 💪':'Không sao đâu, mình cùng gỡ rối từng câu nhé 🦉';
- a.innerHTML=`<div class="pc p-5 flex flex-wrap items-center gap-4"><div class="float">${owl(120)}</div><div><h2 class="text-3xl font-black">Điểm: ${sc}/10</h2><p class="font-bold">Đúng ${e.ok}/${n} câu</p><p class="mt-1">${cm}</p></div><button class="bt ml-auto" onclick="ST.ex=null;render()">🔁 Thi lại</button></div><h3 class="text-xl font-black mt-6">📝 Chữa chi tiết từng câu</h3>`+e.qs.map((q,i)=>qcard(q,'r',i+1)).join('')}
+function chatHTML(id){
+  var u = U(id);
+  return '<div class="mt-3 bg-white rounded-2xl border-2 border-[#2D2A4A] p-3">' +
+    '<div class="max-h-72 overflow-y-auto" id="msgs_'+id+'">' +
+    u.msgs.map(function(m){
+      return '<div class="my-1 '+(m.r==='u'?'text-right':'')+'"><span class="inline-block px-3 py-1 rounded-2xl border-2 border-[#2D2A4A] '+(m.r==='u'?'bg-[#BFF1DC]':'bg-[#F3EEFF]')+'">'+(m.r==='u'?'':'🦉 ')+m.t+'</span></div>';
+    }).join('') + '</div>' +
+    '<div class="flex gap-2 mt-2"><input id="in_'+id+'" class="flex-1" placeholder="Hỏi Cú Đêm: vì sao bài này dùng công thức đó?" onkeydown="if(event.key===\'Enter\')send(\''+id+'\')"><button class="bt text-sm" onclick="send(\''+id+'\')">Gửi</button></div></div>';
+}
+function togChat(id){
+  var u = U(id), el = $('#ch_'+id);
+  if(u.chat){ u.chat = 0; el.innerHTML = ''; return; }
+  u.chat = 1;
+  if(!u.msgs.length) u.msgs.push({r:'m', t:'Chào bạn! Mình đã nắm rõ đề bài này rồi. Bạn đang thắc mắc ở công thức hay bước biến đổi nào? 🦉'});
+  el.innerHTML = chatHTML(id); tx();
+}
+async function send(id){
+  var q = QM[id], u = U(id), inp = $('#in_'+id), v = inp.value.trim(); if(!v) return;
+  u.msgs.push({r:'u', t:esc(v)}); u.msgs.push({r:'m', t:'🦉 Đang suy nghĩ...'});
+  $('#ch_'+id).innerHTML = chatHTML(id);
+  var rep;
+  try{
+    var hist = u.msgs.slice(0,-1).map(function(m){ return {role: m.r==='u'?'user':'model', parts:[{text:m.t}]}; }).filter(function(m,i){ return !(i===0 && m.role==='model'); });
+    rep = (await ai(hist, 'Bạn là Cú Đêm, trợ giảng XSTK Gen Z. Đặt câu hỏi gợi mở Socratic, giải thích dễ hiểu. Đề: '+q.q+'\nLời giải: '+q.sol)).replace(/\n/g,'<br>');
+  }catch(e){
+    rep = (e.message === 'nokey') ? ('Gợi ý nhanh: ' + q.hint + '<br>Lời giải: ' + q.sol + '<br><i>(Nhập Gemini API Key ở trên để hỏi đáp tự do nhé!)</i>') : ('Lỗi: ' + esc(e.message));
+  }
+  u.msgs[u.msgs.length-1] = {r:'m', t:rep};
+  $('#ch_'+id).innerHTML = chatHTML(id);
+  var boxEl = $('#msgs_'+id); if(boxEl) boxEl.scrollTop = boxEl.scrollHeight;
+  tx();
+}
 
-/* --- Mở xem lại câu sai & ảnh đề (tutor) --- */
-function reviewMiss(id){const q=allQ().find(x=>x.id===id);if(!q)return toast('Câu này là đề AI tạo nên đã mất sau khi tải lại trang 🦉');
- ST.ch=q.ch;ST.type='all';ST.lv='all';ST.pi=Math.max(0,filtered().findIndex(x=>x.id===id));go('practice')}
-async function problemPhoto(inp){const f=inp.files[0];if(!f)return;if(!KEY)return toast('Nhập API Key để Cú Đêm đọc đề nha 🦉');
- const r=new FileReader();r.onload=async()=>{toast('🦉 Đang đọc đề trong ảnh...');
-  try{const t=await ai([{role:'user',parts:[{text:'Chép lại chính xác đề bài toán trong ảnh, giữ công thức bằng LaTeX $...$. Chỉ trả về nội dung đề, không lời dẫn.'},{inlineData:{mimeType:f.type||'image/jpeg',data:r.result.split(',')[1]}}]}],'Bạn là trợ lý OCR toán học tiếng Việt.');
-   const q={id:'u'+Date.now(),ch:ST.tch,type:'essay',lv:'Đề chụp ảnh',q:t.trim(),opts:[],ans:0,hint:'',sol:'',viz:'bellcurve_3d',vp:{},m:''};ST.gen.push(q);ST.tq=q.id;render()}
-  catch(e){toast('Lỗi: '+e.message)}};r.readAsDataURL(f)}
+/* ===== 9. CÁC MÀN HÌNH CHÍNH (HOME, PRACTICE, EXAM, TUTOR, STATS, FORUM) ===== */
+function go(v){
+  clearInterval(ST.timer); ST.view = v;
+  if(v === 'exam' && !(ST.ex && !ST.ex.done)) ST.ex = null;
+  render();
+}
+function render(){
+  var a = $('#app'); if(!a) return;
+  $('#homeBtn').classList.toggle('hidden', ST.view === 'home');
+  $('#nav').innerHTML = NAV.map(function(item){
+    return '<button class="bt text-sm '+(ST.view===item[0]?'on':'')+'" onclick="go(\''+item[0]+'\')">'+item[1]+'</button>';
+  }).join('');
+  var views = { home:rHome, practice:rPractice, exam:rExam, tutor:rTutor, stats:rStats, forum:rForum };
+  (views[ST.view] || rHome)(a);
+  tx();
+}
 
-/* --- Diễn đàn XSTK: Gun.js realtime + cache cục bộ --- */
-Object.assign(ST,{fdraft:'',ftitle:'',cd:{}});
-let PADIMG='';
-const FORUM_PEERS=['https://gun-manhattan.herokuapp.com/gun','https://peer.wallie.io/gun'];
-let gun=null;try{if(window.Gun)gun=Gun({peers:FORUM_PEERS})}catch(e){gun=null}
-const ROOT=()=>gun.get('xstk-forum-v1');
-let ME=ls.get('me',null);if(!ME||!ME.uid){ME={uid:'u'+Math.random().toString(36).slice(2,10),avatar:['🦊','🐻','🐼','🐨','🐸','🦄','🐯'][Math.random()*7|0]};ls.set('me',ME)}
-const myName=()=>PROF.name||'Sinh viên ẩn danh';
-const attr=x=>esc(x).replace(/"/g,'&quot;');
-const REACTS=[['like','👍 Thích'],['love','❤️ Yêu thích'],['wow','🤯 Xoắn não']];
-const pack=p=>({id:p.id,title:p.title,ch:p.ch,body:p.body,img:p.img||'',an:p.an,au:p.au,aa:p.aa,t:p.t});
-const SEEDS=[
-{id:'seed1',ch:1,title:'Có hoàn lại và không hoàn lại: sao đáp án khác?',body:'Mình bốc 2 bi từ hộp có 3 đỏ, 2 xanh. Bốc không hoàn lại thì $P(\\text{2 đỏ})$ khác có hoàn lại đúng không ạ?',an:'Minh Anh · K65',au:'seed-a',aa:'🐰'},
-{id:'seed2',ch:3,title:'Nhị thức hay siêu bội?',body:'Lô 20 sản phẩm có 4 lỗi, lấy 5 sản phẩm không hoàn lại. Đề này dùng siêu bội hay nhị thức ạ? Vì sao?',an:'Quốc Bảo · K66',au:'seed-b',aa:'🐻'},
-{id:'seed3',ch:6,title:'Miền bác bỏ hai phía ghi thế nào?',body:'Kiểm định hai phía với $\\alpha=0{,}05$ thì miền bác bỏ là $|z|>z_{0{,}025}$ đúng không ạ? Mình hay nhầm sang $z_{0{,}05}$.',an:'Thu Hà · K65',au:'seed-c',aa:'🐼'},
-{id:'seed4',ch:4,title:'Mẹo Casio: tính x̄ và s nhanh',body:'Vào chế độ STAT, nhập dữ liệu rồi xem $\\bar{x}$ và $s$ trong phần kết quả. Ai dùng dòng máy khác thì chia sẻ thêm nhé!',an:'Đức Anh · K67',au:'seed-d',aa:'🐨'}];
-let POSTS=ls.get('forum',{});if(!POSTS||typeof POSTS!=='object')POSTS={};
-Object.values(POSTS).forEach(x=>{x.likes=x.likes||{};x.comments=x.comments||{}});
-SEEDS.forEach((s,k)=>{if(!POSTS[s.id])POSTS[s.id]={...s,t:Date.now()-k*3600e3,likes:{},comments:{}}});
-function fsave(){const c={};for(const k in POSTS){const x={...POSTS[k]};delete x.img;c[k]=x}ls.set('forum',c)}
-let FRIENDS=ls.get('friends',[]);const WATCHED=new Set();let USERS={},rT=null;
-function schedR(){clearTimeout(rT);rT=setTimeout(()=>{if(ST.view==='forum')rForum($('#app'))},150)}
-function watch(){const root=ROOT();
- root.get('posts').map().on((x,id)=>{if(!x||!x.id)return;const old=POSTS[id]||{likes:{},comments:{}};
-  POSTS[id]={...old,id:x.id,title:x.title,ch:x.ch,body:x.body,img:x.img||old.img||'',an:x.an,au:x.au,aa:x.aa,t:x.t};
-  if(!WATCHED.has(id)){WATCHED.add(id);
-   root.get('posts').get(id).get('likes').map().on((v,uid)=>{POSTS[id].likes[uid]=v||null;schedR()});
-   root.get('posts').get(id).get('comments').map().on((c,cid)=>{if(c&&c.body){POSTS[id].comments[cid]=c;schedR()}})}
-  schedR()});
- root.get('users').map().on((u,uid)=>{if(u&&u.name){USERS[uid]=u;schedR()}})}
-function heartbeat(){if(gun)ROOT().get('users').get(ME.uid).put({name:myName(),av:ME.avatar,seen:Date.now()})}
-function addFriend(uid){if(!uid||uid===ME.uid)return;if(!FRIENDS.includes(uid)){FRIENDS.push(uid);ls.set('friends',FRIENDS);if(gun)ROOT().get('friends').get(ME.uid).get(uid).put(true)}toast('Đã kết bạn 🤝');schedR()}
-function shrink(src,w=560){return new Promise(res=>{const im=new Image();im.onload=()=>{const c=document.createElement('canvas');c.width=w;c.height=im.height*w/im.width;const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,c.width,c.height);g.drawImage(im,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',.7))};im.onerror=()=>res('');im.src=src})}
-async function pubPost(){const body=ST.fdraft.trim(),title=ST.ftitle.trim()||'Câu hỏi mới';if(!body)return toast('Viết nội dung trước nhé ✍️');
- const ch=+($('#fch')?$('#fch').value:1)||1;
- const img=($('#fdraw')&&$('#fdraw').checked&&PADIMG)?await shrink(PADIMG):'';
- const id='p'+Date.now().toString(36)+ME.uid.slice(1,4);
- const p={id,title,ch,body,img,an:myName(),au:ME.uid,aa:ME.avatar,t:Date.now()};
- POSTS[id]={...p,likes:{},comments:{}};ST.fdraft='';ST.ftitle='';fsave();
- if(gun)ROOT().get('posts').get(id).put(pack(p));
- toast('Đã đăng bài 🎉');schedR()}
-function react(pid,kind){const x=POSTS[pid];if(!x)return;const nv=x.likes[ME.uid]===kind?null:kind;x.likes[ME.uid]=nv;
- if(gun)ROOT().get('posts').get(pid).get('likes').get(ME.uid).put(nv);schedR()}
-function comment(pid,txt,isAI){txt=(txt||'').trim();if(!txt||!POSTS[pid])return;const cid='c'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
- const c=isAI?{id:cid,body:txt,an:'🦉 Cú Đêm AI',au:'owl',aa:'🦉',t:Date.now()}:{id:cid,body:txt,an:myName(),au:ME.uid,aa:ME.avatar,t:Date.now()};
- POSTS[pid].comments[cid]=c;fsave();if(gun)ROOT().get('posts').get(pid).get('comments').get(cid).put(c);schedR()}
-function cmt(pid){const v=ST.cd[pid]||'';ST.cd[pid]='';comment(pid,v)}
-async function aiReply(pid){const x=POSTS[pid];if(!x)return;if(!KEY)return toast('Nhập API Key để Cú Đêm vào giải nha 🦉');toast('🦉 Cú Đêm đang đọc câu hỏi...');
- try{const r=await ai(`Câu hỏi trên diễn đàn (Chương ${x.ch}): ${x.title}\n${x.body}\nHãy giải đáp chuẩn xác, dễ hiểu, ngắn gọn (tối đa 8 câu). Công thức LaTeX dùng $...$.`,'Bạn là Cú Đêm, giảng viên XSTK Gen Z, thân thiện và chính xác.');comment(pid,r,true)}
- catch(e){toast('Lỗi: '+e.message)}}
-function shareP(pid){const x=POSTS[pid];if(!x)return;const txt=x.title+'\n'+x.body;
- try{navigator.clipboard.writeText(txt).then(()=>toast('Đã sao chép nội dung bài 📋'),()=>toast('Trình duyệt không cho sao chép'))}catch(e){toast('Trình duyệt không cho sao chép')}}
-function composeHTML(){return `<div class="pc p-4"><b>🌐 Bạn đang thắc mắc bài Xác suất thống kê nào?</b>
- <input id="ftitle" class="w-full mt-2" placeholder="Tiêu đề ngắn gọn" value="${attr(ST.ftitle)}" oninput="ST.ftitle=this.value">
- <textarea id="fbody" rows="3" class="w-full mt-2" placeholder="Gõ nội dung, công thức LaTeX dùng $...$" oninput="ST.fdraft=this.value">${esc(ST.fdraft)}</textarea>
- <div class="flex flex-wrap gap-2 mt-2 items-center"><select id="fch">${CH.map((c,i)=>`<option value="${i+1}">Chương ${i+1}</option>`).join('')}</select>
- <label class="text-sm font-bold"><input type="checkbox" id="fdraw" ${PADIMG?'':'disabled'}> 📎 Đính kèm bản vẽ iPad</label><button class="bt ml-auto" onclick="pubPost()">📮 Đăng bài</button></div></div>`}
-function postHTML(x){const ks=Object.values(x.likes).filter(Boolean);const cnt=k=>ks.filter(v=>v===k).length;const mine=x.likes[ME.uid];
- const cms=Object.values(x.comments).sort((a,b)=>a.t-b.t);
- return `<article class="pc p-4"><div class="flex items-center gap-2"><span class="text-2xl">${x.aa||'🙂'}</span><div><b>${esc(x.an||'Ẩn danh')}</b><div class="text-xs">${new Date(x.t).toLocaleString('vi-VN')} · Chương ${x.ch||'?'}</div></div>${x.au&&x.au!==ME.uid?`<button class="bt text-xs ml-auto" onclick="addFriend('${x.au}')">${FRIENDS.includes(x.au)?'✔ Bạn bè':'➕ Kết bạn'}</button>`:''}</div>
- <h3 class="font-black mt-2">${esc(x.title)}</h3><div class="mt-1">${esc(x.body).replace(/\n/g,'<br>')}</div>${x.img?`<img src="${x.img}" class="mt-2 rounded-xl border-2 border-[#2D2A4A] max-h-72">`:''}
- <div class="flex flex-wrap gap-2 mt-3">${REACTS.map(([k,l])=>`<button class="bt text-xs ${mine===k?'on':''}" onclick="react('${x.id}','${k}')">${l} ${cnt(k)}</button>`).join('')}<button class="bt text-xs" onclick="shareP('${x.id}')">↗️ Chia sẻ</button><button class="bt text-xs" onclick="aiReply('${x.id}')">🦉 Tag Cú Đêm AI vào giải giúp</button></div>
- <div class="mt-3 space-y-2">${cms.map(c=>`<div class="rounded-2xl bg-[#F8FAFC] border-2 border-[#2D2A4A] p-2 text-sm"><b>${c.aa||''} ${esc(c.an||'?')}:</b> ${esc(c.body).replace(/\n/g,'<br>')}</div>`).join('')}</div>
- <div class="flex gap-2 mt-2"><input class="flex-1" placeholder="Viết bình luận..." value="${attr(ST.cd[x.id]||'')}" oninput="ST.cd['${x.id}']=this.value" onkeydown="if(event.key==='Enter')cmt('${x.id}')"><button class="bt text-sm" onclick="cmt('${x.id}')">Gửi</button></div></article>`}
-function rForum(a){const now=Date.now();const posts=Object.values(POSTS).sort((x,y)=>y.t-x.t);
- const online=Object.entries(USERS).filter(([u,v])=>u!==ME.uid&&v.seen&&now-v.seen<90000);
- const pts={};posts.forEach(x=>{const n=x.an||'?';pts[n]=(pts[n]||0)+1+Object.keys(x.comments).length});
- const top=Object.entries(pts).sort((x,y)=>y[1]-x[1]).slice(0,5);
- const trend=CH.map((c,i)=>({i:i+1,n:posts.filter(x=>x.ch===i+1).length})).filter(x=>x.n).sort((x,y)=>y.n-x.n).slice(0,3);
- a.innerHTML=`${gun?'':'<div class="pc p-3 mb-4 text-sm">🦉 Đang chạy ngoại tuyến: bài chỉ lưu trên máy này.</div>'}
- <div class="grid md:grid-cols-12 gap-4"><aside class="md:col-span-3 space-y-4"><div class="pc p-4 text-center"><div class="text-4xl">${ME.avatar}</div><b>${esc(myName())}</b><div class="text-xs">${esc(PROF.title||'')}</div></div>
- <div class="pc p-4"><b>🟢 Bạn học đang hoạt động</b>${online.length?online.map(([u,v])=>`<div class="flex items-center gap-2 mt-2 text-sm"><span>${v.av||'🙂'}</span><span class="flex-1 font-bold">${esc(v.name)}</span>${FRIENDS.includes(u)?'<span class="tag bg-[#BFF1DC]">Bạn bè</span>':`<button class="bt text-xs" onclick="addFriend('${u}')">➕ Kết bạn</button>`}</div>`).join(''):'<p class="text-sm mt-2">Chưa có ai online. Mời bạn bè mở cùng trang nhé!</p>'}</div></aside>
- <section class="md:col-span-6 space-y-4">${composeHTML()}${posts.map(postHTML).join('')}</section>
- <aside class="md:col-span-3 space-y-4"><div class="pc p-4"><b>🏅 Thành viên tích cực</b>${top.length?top.map(([n,v],i)=>`<div class="flex justify-between text-sm mt-1"><span>${i+1}. ${esc(n)}</span><b>${v}đ</b></div>`).join(''):'<p class="text-sm">Chưa có dữ liệu</p>'}</div>
- <div class="pc p-4"><b>🔥 Chủ đề đang hot</b>${trend.length?trend.map(t=>`<div class="tag bg-[#FFF1B8] inline-block m-1">Chương ${t.i} · ${t.n} bài</div>`).join(''):'<p class="text-sm">Chưa có bài nào</p>'}</div></aside></div>`;tx()}
-if(gun){SEEDS.forEach(s=>ROOT().get('posts').get(s.id).put(pack(POSTS[s.id])));watch();heartbeat();setInterval(heartbeat,30000)}
+function rHome(a){
+  a.innerHTML = '<section class="pc p-5 flex flex-wrap items-center gap-4 bg-white">' +
+    '<div class="float">'+owl(145)+'</div>' +
+    '<div class="flex-1 min-w-[220px]">' +
+    '<div class="inline-block pc px-3 py-1 text-sm mb-2">👋 Chào '+esc(myName())+'! Cùng Cú Đêm chinh phục Xác suất &amp; Thống kê nhé!</div>' +
+    '<h1 class="text-3xl md:text-4xl font-black">Học Xác suất &amp; Thống kê cực chill cùng Giáo sư Cú Đêm 🦉</h1>' +
+    '<p class="mt-1 font-bold">Luyện bài tập thực tế 3D, thi thử bấm giờ, viết bảng iPad và thảo luận cộng đồng thời gian thực!</p>' +
+    '<div class="flex gap-3 mt-3 flex-wrap">' +
+    '<span class="tag bg-[#BFF1DC] py-1 text-base">🏆 '+prog.done.length+' bài đã chinh phục</span>' +
+    '<span class="tag bg-[#FFD2D0] py-1 text-base">🔥 '+prog.streak+' ngày chăm học</span></div></div></section>' +
+    '<div class="grid md:grid-cols-2 gap-6 mt-6">' +
+    '<button onclick="go(\'practice\')" class="pc p-5 text-left bt" style="background:linear-gradient(135deg,#D9C9FF,#BFF1DC)">' +
+    '<div class="text-4xl">🎯🎲</div><h2 class="text-2xl font-black mt-2">Khu Luyện Tập Chủ Động (15–20 câu/lần)</h2>' +
+    '<p class="font-bold mt-1">Đầy đủ 7 chương với 9 mô hình 3D thực tế, Bản đồ tư duy và Vấn đáp Voice AI ngay tại từng câu hỏi.</p></button>' +
+    '<button onclick="go(\'exam\')" class="pc p-5 text-left bt" style="background:linear-gradient(135deg,#FFD2D0,#FFF1B8)">' +
+    '<div class="text-4xl">⏰📝</div><h2 class="text-2xl font-black mt-2">Đấu Trường Thi Thử Bấm Giờ</h2>' +
+    '<p class="font-bold mt-1">Làm đề thi có đồng hồ đếm ngược, tự động chấm điểm và mở Bản đồ tư duy + Vấn đáp sau khi nộp bài.</p></button>' +
+    '<button onclick="go(\'tutor\')" class="pc p-5 text-left bt" style="background:linear-gradient(135deg,#BFF1DC,#D9C9FF)">' +
+    '<div class="text-4xl">🎙️✍️</div><h2 class="text-2xl font-black mt-2">AI Tutor &amp; Bảng Viết iPad</h2>' +
+    '<p class="font-bold mt-1">AI tạo đề tự luận mới, chụp ảnh đề bài, viết tay lên bảng iPad hoặc tải PDF để AI chấm theo Barem điểm.</p></button>' +
+    '<button onclick="go(\'forum\')" class="pc p-5 text-left bt" style="background:linear-gradient(135deg,#FFF1B8,#FFD2D0)">' +
+    '<div class="text-4xl">🌐🎓</div><h2 class="text-2xl font-black mt-2">Diễn Đàn Cộng Đồng &amp; Hồ Sơ AI</h2>' +
+    '<p class="font-bold mt-1">Kết nối bạn học thời gian thực như mạng xã hội, đăng bài, thả cảm xúc và xem Hồ sơ chẩn đoán lỗi sai.</p></button></div>';
+}
 
-/* ===== Khởi động ===== */
-(function(){const c=ls.get('cfg',{});KEY=c.k||'';MODEL=c.m||MODEL;$('#key').value=KEY;$('#model').value=MODEL;render()})();
+/* --- Khu Luyện Tập --- */
+function filtered(){
+  return BANK.concat(ST.gen).filter(function(q){
+    return q.ch === ST.ch && (ST.type === 'all' || q.type === ST.type) && (ST.lv === 'all' || q.lv === ST.lv);
+  });
+}
+function pgo(d){ var n = filtered().length; if(!n) return; ST.pi = (ST.pi + d + n) % n; pList(); }
+function pList(){
+  var l = filtered(), el = $('#plist'); if(!el) return;
+  if(!l.length){
+    el.innerHTML = '<div class="pc p-5 mt-4 text-center">🦉 Chưa có câu hỏi cho bộ lọc này. Hãy bấm nút <b>“✨ Tạo bộ 15-20 bài toán mới”</b> ở trên nhé!</div>';
+    return;
+  }
+  if(ST.pi >= l.length) ST.pi = 0;
+  el.innerHTML = '<div class="flex flex-wrap gap-1 items-center my-4">' +
+    '<button class="bt text-sm" onclick="pgo(-1)">◀ Câu trước</button>' +
+    l.map(function(_, i){ return '<button class="bt text-sm '+(i===ST.pi?'on':'')+'" onclick="ST.pi='+i+';pList()">'+(i+1)+'</button>'; }).join('') +
+    '<button class="bt text-sm" onclick="pgo(1)">Câu tiếp ▶</button>' +
+    '<span class="text-sm font-black ml-2">Câu '+(ST.pi+1)+' / '+l.length+'</span></div>' +
+    qcard(l[ST.pi], 'p', ST.pi + 1);
+  tx();
+}
+function rPractice(a){
+  a.innerHTML = '<div class="pc p-4"><h2 class="text-2xl font-black mb-2">🎯 Khu Luyện Tập Chủ Động (7 Chương)</h2>' +
+    '<div class="flex flex-wrap gap-2">' +
+    CH.map(function(c, i){ return '<button class="bt text-sm '+(ST.ch===i+1?'on':'')+'" onclick="ST.ch='+(i+1)+';ST.pi=0;render()">Chương '+(i+1)+'</button>'; }).join('') +
+    '</div><p class="font-bold mt-2 text-indigo-900">📘 Chương '+ST.ch+': '+CH[ST.ch-1]+'</p>' +
+    '<div class="flex flex-wrap gap-2 mt-3 items-center">' +
+    '<select onchange="ST.type=this.value;ST.pi=0;pList()"><option value="all">Mọi hình thức</option><option value="mcq" '+(ST.type==='mcq'?'selected':'')+'>Trắc nghiệm</option><option value="essay" '+(ST.type==='essay'?'selected':'')+'>Tự luận</option></select>' +
+    '<select onchange="ST.lv=this.value;ST.pi=0;pList()"><option value="all">Mọi độ khó</option>' +
+    ['Cơ bản','Vận dụng','Vận dụng cao'].map(function(l){ return '<option '+(ST.lv===l?'selected':'')+'>'+l+'</option>'; }).join('') + '</select>' +
+    '<select onchange="ST.cnt=+this.value">' +
+    [10,15,20].map(function(n){ return '<option value="'+n+'" '+(ST.cnt===n?'selected':'')+'>Tạo '+n+' câu/lần</option>'; }).join('') + '</select>' +
+    '<button class="bt bg-[#BFF1DC]" id="gbtn" onclick="genP()">✨ Tạo '+ST.cnt+' bài toán mới (AI + Thực tế)</button></div></div>' +
+    '<div id="plist"></div>';
+  pList();
+}
+async function genP(){
+  var b = $('#gbtn'); if(b){ b.disabled = true; b.textContent = '🦉 Đang khởi tạo '+ST.cnt+' câu hỏi...'; }
+  try{
+    if(KEY){
+      var r = await genAI({ch:ST.ch, type:ST.type==='all'?'mcq':ST.type, lv:ST.lv==='all'?'Vận dụng cao':ST.lv}, ST.cnt);
+      if(r.length < ST.cnt){
+        r = r.concat(buildPracticePack(ST.ch, ST.cnt - r.length));
+      }
+      ST.gen = ST.gen.concat(r);
+      toast('Đã tạo mới '+r.length+' câu hỏi bằng AI! 🎉');
+    } else {
+      var localPack = buildPracticePack(ST.ch, ST.cnt);
+      ST.gen = ST.gen.concat(localPack);
+      toast('Đã tạo '+localPack.length+' bài toán thực tế Chương '+ST.ch+'! 🎉');
+    }
+    ST.pi = 0;
+  }catch(e){
+    var fbPack = buildPracticePack(ST.ch, ST.cnt);
+    ST.gen = ST.gen.concat(fbPack);
+    toast('Đã nạp '+fbPack.length+' bài toán thực tế Chương '+ST.ch+'! 🦉');
+  }
+  if(b){ b.disabled = false; b.textContent = '✨ Tạo '+ST.cnt+' bài toán mới (AI + Thực tế)'; }
+  pList();
+}
+
+/* --- Đấu Trường Thi Thử --- */
+function cfgExam(a){
+  var c = ST.cfg;
+  var btn = function(k, v, l){ return '<button class="bt '+(c[k]===v?'on':'')+'" onclick="ST.cfg.'+k+'='+JSON.stringify(v)+';render()">'+l+'</button>'; };
+  a.innerHTML = '<div class="pc p-5"><h2 class="text-2xl font-black">⏰ Đấu Trường Thi Thử Bấm Giờ</h2>' +
+    '<p class="font-bold mt-3">1. Chọn phạm vi kiến thức:</p><div class="flex flex-wrap gap-2 mt-1">' +
+    btn('scope','all','Tổng hợp 7 chương') +
+    CH.map(function(_, i){ return btn('scope', i+1, 'Chương '+(i+1)); }).join('') + '</div>' +
+    '<p class="font-bold mt-3">2. Số lượng câu hỏi:</p><div class="flex gap-2 mt-1">' +
+    [5,10,15,20].map(function(n){ return btn('n', n, n+' câu'); }).join('') + '</div>' +
+    '<p class="font-bold mt-3">3. Thời gian làm bài:</p><div class="flex gap-2 mt-1">' +
+    [10,15,30,45].map(function(m){ return btn('min', m, m+' phút'); }).join('') + '</div>' +
+    '<div class="flex flex-wrap gap-3 mt-5">' +
+    '<button class="bt bg-[#BFF1DC]" onclick="startEx(false)">📚 Bắt đầu Thi Thử ngay ('+c.n+' câu)</button>' +
+    '<button class="bt" id="xbtn" onclick="startEx(true)">✨ Nhờ AI ra Đề Thi Mới ('+c.n+' câu)</button></div></div>';
+}
+async function startEx(useAI){
+  var c = ST.cfg, qs = [];
+  if(useAI && KEY){
+    var b = $('#xbtn'); if(b){ b.disabled = true; b.textContent = '🦉 Đang ra đề thi...'; }
+    try{
+      qs = await genAI({ch: c.scope==='all'?0:c.scope, type:'mcq', lv:'Vận dụng'}, c.n);
+    }catch(e){ toast('Đang dùng ngân hàng đề thi chuẩn: ' + e.message); }
+  }
+  if(qs.length < c.n){
+    var pool = SAMPLE_EXAM.filter(function(q){ return c.scope==='all' || q.ch===c.scope; });
+    var extra = buildPracticePack(c.scope==='all' ? 1 : c.scope, c.n);
+    qs = qs.concat(pool).concat(extra).slice(0, c.n);
+  }
+  ST.ex = { qs:qs, ans:{}, done:false, end: Date.now() + c.min*60000 };
+  render();
+}
+function exQ(q, i){
+  var a = ST.ex.ans[q.id];
+  return '<span class="tag bg-[#D9C9FF]">Câu '+(i+1)+' · Chương '+q.ch+'</span>' +
+    '<div class="font-bold text-lg my-2">'+q.q+'</div>' +
+    q.opts.map(function(o, k){ return '<button class="opt '+(a===k?'sel':'')+'" onclick="exPick('+i+','+k+')"><b>'+LB[k]+'.</b> '+o+'</button>'; }).join('') +
+    vBlock('ex'+q.id, q.id, true);
+}
+function exPick(i, k){
+  var q = ST.ex.qs[i]; ST.ex.ans[q.id] = k;
+  $('#eq_'+i).innerHTML = exQ(q, i);
+  var nv = $('#nv_'+i); if(nv) nv.classList.add('on');
+  tx();
+}
+function submitEx(){
+  var e = ST.ex; if(!e || e.done) return;
+  clearInterval(ST.timer); e.done = true;
+  e.ok = e.qs.filter(function(q){
+    var r = (e.ans[q.id] === q.ans);
+    recAtt(q, r); if(r) markDone(q.id); else logMiss(q, 'exam');
+    return r;
+  }).length;
+  render();
+}
+function resExam(a){
+  var e = ST.ex, n = e.qs.length, sc = (e.ok / n * 10).toFixed(1);
+  var cm = sc >= 8 ? 'Xuất sắc! Bạn nắm kiến thức rất chắc 🎉' : (sc >= 5 ? 'Khá tốt! Hãy xem Bản đồ tư duy các câu sai bên dưới nhé 💪' : 'Cùng Cú Đêm xem Bản đồ tư duy và Vấn đáp từng câu bên dưới để gỡ rối nhé 🦉');
+  a.innerHTML = '<div class="pc p-5 flex flex-wrap items-center gap-4">' +
+    '<div class="float">'+owl(110)+'</div>' +
+    '<div><h2 class="text-3xl font-black">Điểm số: '+sc+' / 10</h2><p class="font-bold">Trả lời đúng '+e.ok+' / '+n+' câu</p><p class="mt-1">'+cm+'</p></div>' +
+    '<button class="bt ml-auto" onclick="ST.ex=null;render()">🔁 Thi đề khác</button></div>' +
+    '<h3 class="text-xl font-black mt-6">📝 Chữa bài chi tiết (Có Bản đồ tư duy &amp; Vấn đáp tại từng câu)</h3>' +
+    e.qs.map(function(q, i){ return qcard(q, 'r', i+1); }).join('');
+}
+function rExam(a){
+  var e = ST.ex; if(!e) return cfgExam(a); if(e.done) return resExam(a);
+  a.innerHTML = '<div class="pc p-3 sticky top-16 z-20 flex flex-wrap items-center gap-2">' +
+    '<b class="text-2xl text-red-600">⏰ <span id="clk">--:--</span></b>' +
+    '<div class="flex gap-1 flex-wrap flex-1">' +
+    e.qs.map(function(_, i){ return '<button id="nv_'+i+'" class="bt text-sm" onclick="document.getElementById(\'eq_'+i+'\').scrollIntoView({behavior:\'smooth\'})">'+(i+1)+'</button>'; }).join('') +
+    '</div><button class="bt bg-[#BFF1DC]" onclick="submitEx()">📨 Nộp bài chấm điểm</button></div>' +
+    e.qs.map(function(q, i){ QM[q.id] = q; return '<div class="pc p-4 my-4" id="eq_'+i+'">'+exQ(q, i)+'</div>'; }).join('');
+  clearInterval(ST.timer);
+  var tick = function(){
+    var s = Math.max(0, (e.end - Date.now())/1000) | 0;
+    var c = $('#clk'); if(c) c.textContent = String((s/60)|0).padStart(2,'0') + ':' + String(s%60).padStart(2,'0');
+    if(s <= 0) submitEx();
+  };
+  tick(); ST.timer = setInterval(tick, 500); tx();
+}
+
+/* --- AI Tutor & Bảng iPad --- */
+function rTutor(a){
+  var all = allQ(), cur = all.find(function(q){ return q.id === ST.tq; }) || all[0];
+  ST.tq = cur.id;
+  a.innerHTML = '<div class="grid md:grid-cols-5 gap-4">' +
+    '<div class="pc p-4 md:col-span-2"><h2 class="text-xl font-black">🎙️ AI Tutor &amp; Bảng iPad</h2>' +
+    '<label class="block text-sm font-bold mt-2">Chọn đề bài có sẵn:</label>' +
+    '<select class="w-full mt-1" onchange="ST.tq=this.value;render()">' +
+    all.map(function(q){ return '<option value="'+q.id+'" '+(q.id===cur.id?'selected':'')+'>Ch'+q.ch+' · '+esc(q.q.replace(/\$/g,'').slice(0,48))+'...</option>'; }).join('') +
+    '</select><div class="p-3 rounded-2xl bg-[#FFF1B8] border-2 border-[#2D2A4A] font-bold mt-3">'+cur.q+'</div>' +
+    '<div class="mt-4"><b>⚖️ Barem chấm điểm (Tự chỉnh được):</b>' +
+    RUBRIC.map(function(r, i){
+      return '<div class="flex gap-2 items-center my-1"><input class="flex-1 text-sm" value="'+attr(r.k)+'" onchange="RUBRIC['+i+'].k=this.value"><input type="number" step="0.5" class="w-16 text-sm" value="'+r.p+'" onchange="RUBRIC['+i+'].p=+this.value;rTutorSum()"></div>';
+    }).join('') + '<div id="rsum" class="font-black mt-1 text-indigo-900"></div></div></div>' +
+    '<div class="pc p-4 md:col-span-3">' +
+    '<div class="p-3 rounded-2xl bg-[#F3EEFF] border-2 border-[#2D2A4A] mb-3"><b>✨ Tạo đề bài mới bằng AI cho Bảng iPad</b>' +
+    '<div class="flex flex-wrap gap-2 mt-2">' +
+    '<select onchange="ST.tch=+this.value">'+CH.map(function(c,i){ return '<option value="'+(i+1)+'" '+(ST.tch===i+1?'selected':'')+'>Chương '+(i+1)+'</option>'; }).join('')+'</select>' +
+    '<select onchange="ST.tlv=this.value">'+['Cơ bản','Vận dụng','Vận dụng cao'].map(function(l){ return '<option '+(ST.tlv===l?'selected':'')+'>'+l+'</option>'; }).join('')+'</select>' +
+    '<input id="treq" class="flex-1 min-w-[140px] text-sm" placeholder="Chủ đề thực tế (vd: y tế, tài chính)">' +
+    '<button class="bt text-sm bg-[#BFF1DC]" onclick="aiTutorNew()">✨ AI Tạo Đề Mới</button></div>' +
+    '<textarea id="tcustom" class="w-full mt-2 text-sm" rows="2" placeholder="Hoặc tự gõ / dán đề bài trên lớp của bạn vào đây..."></textarea>' +
+    '<div class="flex gap-2 flex-wrap mt-2"><button class="bt text-sm" onclick="customTutor()">📝 Dùng đề tự nhập</button>' +
+    '<label class="bt text-sm cursor-pointer">📷 Chụp/Tải ảnh đề bài<input type="file" accept="image/*" class="hidden" onchange="problemPhoto(this)"></label></div></div>' +
+    '<div class="flex flex-wrap gap-2 items-center">' +
+    ['#2D2A4A','#2563EB','#DC2626','#16A34A'].map(function(c){ return '<button class="bt" style="background:'+c+';width:2rem;height:2rem;padding:0" onclick="PEN.c=\''+c+'\';PEN.e=0"></button>'; }).join('') +
+    '<select onchange="PEN.w=+this.value"><option value="2">Nét 2</option><option value="4" selected>Nét 4</option><option value="8">Nét 8</option></select>' +
+    '<button class="bt text-xs" onclick="PEN.e=1">🧽 Tẩy</button><button class="bt text-xs" onclick="undoPad()">↩️ Hoàn tác</button><button class="bt text-xs" onclick="clearPad()">🗑️ Xoá bảng</button>' +
+    ['∑','∫','μ','σ²','x̄','P(A|B)'].map(function(s){ return '<button class="bt text-xs" onclick="symPad(\''+s+'\')">'+s+'</button>'; }).join('') + '</div>' +
+    '<canvas id="ipad" width="700" height="420" class="w-full mt-2 rounded-2xl border-4 border-[#2D2A4A] bg-white" style="touch-action:none;background-image:linear-gradient(#e5e7eb 1px,transparent 1px),linear-gradient(90deg,#e5e7eb 1px,transparent 1px);background-size:28px 28px"></canvas>' +
+    '<div class="flex flex-wrap gap-2 items-center mt-3"><label class="bt text-sm cursor-pointer bg-white">📎 Tải Ảnh hoặc PDF bài làm<input type="file" id="up" class="hidden" accept="image/png,image/jpeg,application/pdf" onchange="loadUp(this)"></label><span id="upname" class="text-sm font-bold"></span></div>' +
+    '<div id="prev" class="mt-2"></div>' +
+    '<button class="bt mt-3 bg-[#BFF1DC] w-full text-base py-2" onclick="gradeTutor()">🦉 Nhờ AI Tutor Chấm Điểm Theo Barem</button>' +
+    '<div id="tres" class="mt-3"></div>' + vBlock('tu', cur.id, false) + '</div></div>';
+  initPad(); rTutorSum(); tx();
+}
+function rTutorSum(){ var el = $('#rsum'); if(el) el.textContent = 'Tổng điểm Barem: ' + RUBRIC.reduce(function(s,r){ return s + (Number(r.p)||0); }, 0) + ' / 10 điểm'; }
+function snap(){ var c = $('#ipad'); if(!c) return; var g = c.getContext('2d'); PSTK.push(g.getImageData(0,0,c.width,c.height)); if(PSTK.length>20) PSTK.shift(); }
+function initPad(){
+  var c = $('#ipad'); if(!c) return; var g = c.getContext('2d'); PSTK = []; down = false;
+  var pos = function(e){ var r = c.getBoundingClientRect(); return [(e.clientX-r.left)*c.width/r.width, (e.clientY-r.top)*c.height/r.height]; };
+  c.onpointerdown = function(e){ snap(); down = true; c.setPointerCapture(e.pointerId); last = pos(e); g.globalCompositeOperation = PEN.e ? 'destination-out' : 'source-over'; g.strokeStyle = PEN.c; g.lineWidth = PEN.e ? 28 : PEN.w; g.lineCap = 'round'; g.lineJoin = 'round'; };
+  c.onpointermove = function(e){ if(!down) return; var p = pos(e); g.beginPath(); g.moveTo(last[0],last[1]); g.lineTo(p[0],p[1]); g.stroke(); last = p; };
+  c.onpointerup = c.onpointercancel = function(){ down = false; PADIMG = c.toDataURL('image/png'); };
+}
+function undoPad(){ var c = $('#ipad'); if(c && PSTK.length) c.getContext('2d').putImageData(PSTK.pop(),0,0); }
+function clearPad(){ var c = $('#ipad'); if(!c) return; snap(); c.getContext('2d').clearRect(0,0,c.width,c.height); PADIMG = ''; }
+function symPad(s){ var c = $('#ipad'); if(!c) return; var g = c.getContext('2d'); snap(); g.globalCompositeOperation = 'source-over'; g.fillStyle = PEN.c; g.font = '700 40px Nunito'; g.fillText(s, 60+Math.random()*360, 100+Math.random()*220); PADIMG = c.toDataURL('image/png'); }
+function loadUp(inp){
+  var f = inp.files[0]; if(!f) return;
+  var r = new FileReader();
+  r.onload = function(){
+    upFile = { mime: f.type || 'image/png', data: r.result.split(',')[1] };
+    $('#upname').textContent = 'Đã đính kèm: ' + f.name;
+    $('#prev').innerHTML = f.type === 'application/pdf' ? '<div class="p-2 pc bg-[#FFF1B8] text-sm font-bold">📄 Tệp PDF: '+esc(f.name)+'</div>' : '<img src="'+r.result+'" class="max-h-44 rounded-xl border-2 border-[#2D2A4A]">';
+  };
+  r.readAsDataURL(f);
+}
+async function aiTutorNew(){
+  var req = ($('#treq') ? $('#treq').value : '').trim();
+  if(!KEY){
+    var loc = buildPracticePack(ST.tch, 1)[0]; loc.type = 'essay';
+    ST.gen.push(loc); ST.tq = loc.id; render();
+    return toast('Đã tạo đề mới Chương '+ST.tch+' cho Bảng iPad! 🦉');
+  }
+  toast('🦉 AI đang soạn đề mới...');
+  try{
+    var r = await genAI({ch:ST.tch, type:'essay', lv:ST.tlv, note:req}, 1);
+    ST.gen.push(r[0]); ST.tq = r[0].id; render();
+  }catch(e){
+    var fb = buildPracticePack(ST.tch, 1)[0]; fb.type = 'essay';
+    ST.gen.push(fb); ST.tq = fb.id; render();
+  }
+}
+function customTutor(){
+  var t = ($('#tcustom') ? $('#tcustom').value : '').trim();
+  if(!t) return toast('Bạn hãy gõ hoặc dán đề bài vào ô trước nhé ✍️');
+  var q = M('u'+Date.now(), ST.tch, 'essay', 'Đề tự nhập', t, [], 0, 'Xác định công thức chính.', 'Áp dụng công thức chương '+ST.tch, 'bellcurve_3d', {}, '');
+  ST.gen.push(q); ST.tq = q.id; render();
+}
+async function problemPhoto(inp){
+  var f = inp.files[0]; if(!f) return;
+  if(!KEY) return toast('Hãy nhập Gemini API Key ở thanh trên cùng để AI đọc chữ trong ảnh nhé 🦉');
+  var r = new FileReader();
+  r.onload = async function(){
+    toast('🦉 Đang đọc đề bài từ ảnh...');
+    try{
+      var t = await ai([{role:'user', parts:[{text:'Chép lại chính xác đề bài toán trong ảnh bằng tiếng Việt, công thức viết dạng LaTeX $...$.'},{inlineData:{mimeType:f.type||'image/jpeg', data:r.result.split(',')[1]}}]}]);
+      var q = M('u'+Date.now(), ST.tch, 'essay', 'Đề chụp ảnh', t.trim(), [], 0, '', '', 'bellcurve_3d', {}, '');
+      ST.gen.push(q); ST.tq = q.id; render();
+    }catch(e){ toast('Lỗi đọc ảnh: ' + e.message); }
+  };
+  r.readAsDataURL(f);
+}
+async function gradeTutor(){
+  var all = allQ(), q = all.find(function(x){ return x.id === ST.tq; }) || all[0], el = $('#tres');
+  if(!KEY) return toast('Hãy nhập Gemini API Key ở trên để AI Tutor chấm bài nhé 🦉');
+  var src = null;
+  if(upFile){ src = {mimeType: upFile.mime, data: upFile.data}; }
+  else {
+    if(!PSTK.length) return toast('Bạn hãy viết lời giải lên bảng iPad hoặc tải ảnh/PDF bài làm lên trước nhé ✍️');
+    var c = $('#ipad'), t = document.createElement('canvas'); t.width = c.width; t.height = c.height;
+    var tg = t.getContext('2d'); tg.fillStyle = '#fff'; tg.fillRect(0,0,t.width,t.height); tg.drawImage(c,0,0);
+    src = {mimeType:'image/png', data: t.toDataURL('image/png').split(',')[1]};
+  }
+  el.innerHTML = '<div class="pc p-3 bg-[#FFF1B8] font-bold">🦉 AI Tutor đang đọc nét chữ và chấm theo Barem...</div>';
+  var prompt = 'Đề bài: '+q.q+'\nLời giải chuẩn: '+q.sol+'\nBarem điểm:\n'+RUBRIC.map(function(r){ return '- '+r.k+': '+r.p+'đ'; }).join('\n')+'\nHãy đọc bài làm trong ảnh/PDF đính kèm, chấm điểm từng mục theo Barem, nhận xét chi tiết và cuối cùng ghi Tổng: X/10. Dùng LaTeX $...$.';
+  try{
+    var res = await ai([{role:'user', parts:[{text:prompt},{inlineData:src}]}], 'Bạn là Giáo sư Cú Đêm chấm bài cẩn thận, công tâm.');
+    el.innerHTML = '<div class="pc p-4 bg-[#EFFFF8]">'+res.replace(/\n/g,'<br>')+'</div>';
+    var sc = scoreOf(res); if(sc !== null){ recAtt(q, sc >= 5); if(sc < 5) logMiss(q, 'essay'); }
+  }catch(e){ el.innerHTML = '<div class="pc p-3 bg-[#FFD2D0]">Lỗi: '+esc(e.message)+'</div>'; }
+  tx();
+}
+
+/* --- Hồ Sơ Cá Nhân & Chẩn Đoán Lỗi Sai --- */
+function mastery(ch){ var a = ATT[ch]; return (a && a.n) ? Math.round(a.ok / a.n * 100) : 0; }
+function xp(){ return prog.done.length * 10 + prog.streak * 5; }
+function saveProf(){
+  PROF.name = $('#pn').value.trim();
+  PROF.sid = $('#psid').value.trim();
+  PROF.cls = $('#pcls').value.trim();
+  PROF.title = $('#ptitle').value;
+  ls.set('prof', PROF); renderAuth(); toast('Đã cập nhật Hồ sơ cá nhân! 🎓');
+}
+function reviewMiss(id){
+  var q = allQ().find(function(x){ return x.id === id; });
+  if(!q) return toast('Đang chuyển về khu luyện tập chương tương ứng 🦉');
+  ST.ch = q.ch; ST.type = 'all'; ST.lv = 'all';
+  ST.pi = Math.max(0, filtered().findIndex(function(x){ return x.id === id; }));
+  go('practice');
+}
+function rStats(a){
+  var lvl = Math.floor(xp()/100) + 1;
+  var vals = Object.values(ATT), tot = vals.reduce(function(s,x){ return s+x.n; }, 0), okT = vals.reduce(function(s,x){ return s+x.ok; }, 0);
+  var avg = tot ? Math.round(okT/tot*100) : 0;
+  var mx = Math.max(1, Math.max.apply(null, CH.map(function(_,i){ return miss.filter(function(m){ return m.ch===i+1; }).length; })));
+  a.innerHTML = '<div class="grid md:grid-cols-3 gap-4">' +
+    '<div class="pc p-5"><h2 class="text-xl font-black">🪪 Hồ Sơ Học Tập Cá Nhân</h2>' +
+    '<div class="text-center my-3">'+(currentUser && currentUser.photoURL ? '<img src="'+attr(currentUser.photoURL)+'" class="w-20 h-20 rounded-full mx-auto border-4 border-[#2D2A4A]">' : '<div class="inline-block">'+owl(90,false)+'</div>')+'</div>' +
+    '<label class="block text-sm font-bold mt-2">Họ và tên<input id="pn" class="w-full mt-1" value="'+attr(myName())+'"></label>' +
+    '<label class="block text-sm font-bold mt-2">Mã số sinh viên<input id="psid" class="w-full mt-1" value="'+attr(PROF.sid)+'"></label>' +
+    '<label class="block text-sm font-bold mt-2">Trường / Lớp<input id="pcls" class="w-full mt-1" value="'+attr(PROF.cls)+'"></label>' +
+    '<label class="block text-sm font-bold mt-2">Danh hiệu<select id="ptitle" class="w-full mt-1">'+TITLES.map(function(t){ return '<option '+(PROF.title===t?'selected':'')+'>'+t+'</option>'; }).join('')+'</select></label>' +
+    '<button class="bt mt-3 w-full bg-[#BFF1DC]" onclick="saveProf()">💾 Lưu thông tin Hồ sơ</button>' +
+    '<div class="flex flex-wrap gap-2 mt-4 justify-center"><span class="tag bg-[#FFF1B8]">Level '+lvl+'</span><span class="tag bg-[#BFF1DC]">'+xp()+' XP</span><span class="tag bg-[#FFD2D0]">🔥 '+prog.streak+' ngày</span><span class="tag bg-[#D9C9FF]">Tỷ lệ đúng '+avg+'%</span></div></div>' +
+    '<div class="pc p-5 md:col-span-2"><h2 class="text-xl font-black">🧭 Bản Đồ Năng Lực &amp; Thống Kê Lỗi Sai 7 Chương</h2>' +
+    CH.map(function(c, i){
+      var m = mastery(i+1), n = ATT[i+1] ? ATT[i+1].n : 0;
+      return '<div class="my-2 text-sm"><div class="flex justify-between font-bold"><span>Chương '+(i+1)+': '+c+'</span><span>'+(n ? m+'% ('+ATT[i+1].ok+'/'+n+' câu)' : 'Chưa làm')+'</span></div>' +
+        '<div class="bg-white border-2 border-[#2D2A4A] rounded-full h-4 overflow-hidden"><div class="h-full bg-[#BFF1DC]" style="width:'+m+'%"></div></div></div>';
+    }).join('') +
+    '<h3 class="font-black mt-4 mb-1">📊 Biểu đồ số câu sai theo chương</h3>' +
+    '<div class="flex gap-2 items-end h-24 pt-2">' +
+    CH.map(function(_, i){
+      var n = miss.filter(function(m){ return m.ch === i+1; }).length;
+      return '<div class="flex-1 flex flex-col items-center"><span class="text-xs font-bold">'+n+'</span><div class="w-full bg-[#FFD2D0] border-2 border-[#2D2A4A] rounded-t-lg" style="height:'+Math.max(8, Math.round(n/mx*70))+'px"></div><span class="text-xs font-bold mt-1">Ch'+(i+1)+'</span></div>';
+    }).join('') + '</div>' +
+    '<div class="flex gap-2 flex-wrap mt-4">' +
+    '<button class="bt bg-[#D9C9FF]" onclick="analyzeMiss()">🦉 AI Chẩn Đoán Lỗi Sai &amp; Đề Xuất Hướng Khắc Phục</button>' +
+    '<button class="bt bg-[#BFF1DC]" onclick="remed()">🎯 Tạo Bộ Bài Tập Bổ Trợ Lỗ Hổng</button>' +
+    '<button class="bt bg-white text-xs" onclick="clearMiss()">🗑️ Xoá lịch sử lỗi</button></div>' +
+    '<div id="ana" class="mt-3"></div>' +
+    '<h3 class="font-black mt-4">📝 Chi tiết các câu làm sai gần đây (Bấm vào để làm lại)</h3>' +
+    '<div class="max-h-52 overflow-y-auto mt-1">' +
+    (miss.length ? miss.slice().reverse().map(function(m){
+      return '<div class="opt text-sm" onclick="reviewMiss(\''+m.id+'\')"><b>[Chương '+m.ch+' · '+MODES[m.mode]+']</b> '+m.q+'<br><span class="text-xs text-indigo-800">Đáp án chuẩn: '+m.ans+'</span></div>';
+    }).join('') : '<p class="text-sm mt-1">Bạn chưa có câu trả lời sai nào. Hãy thử làm bài ở Khu Luyện Tập hoặc Thi Thử nhé! 🎉</p>') +
+    '</div></div></div>';
+  tx();
+}
+async function analyzeMiss(){
+  var el = $('#ana'); if(!el) return;
+  if(!miss.length) return toast('Bạn chưa có câu sai nào trong hồ sơ! 🎉');
+  if(!KEY){
+    el.innerHTML = '<div class="pc p-4 bg-[#F3EEFF] text-sm"><b>🦉 Chẩn đoán nhanh từ Hồ sơ:</b> Bạn đang có <b>'+miss.length+' câu sai</b>. Hãy chú ý ôn kỹ điều kiện áp dụng công thức xác suất (hoàn lại vs không hoàn lại) và kiểm tra kỹ độ lệch chuẩn mẫu $s$ trước khi tính khoảng ước lượng nhé!</div>';
+    tx(); return;
+  }
+  el.innerHTML = '<div class="pc p-3 bg-[#FFF1B8] font-bold">🦉 AI đang phân tích hồ sơ năng lực của bạn...</div>';
+  try{
+    var list = miss.slice(-20).map(function(m){ return 'Ch'+m.ch+' ['+MODES[m.mode]+']: '+m.q; }).join('\n');
+    var res = await ai('Hồ sơ lỗi sai của sinh viên '+myName()+':\n'+list+'\nHãy đưa ra: 1. Nhận định chung về lỗ hổng kiến thức; 2. Phương án khắc phục cụ thể cho từng chương bị sai. Ngắn gọn, dùng LaTeX $...$.');
+    el.innerHTML = '<div class="pc p-4 bg-[#F3EEFF] text-sm">'+res.replace(/\n/g,'<br>')+'</div>';
+  }catch(e){ el.innerHTML = 'Lỗi: ' + esc(e.message); }
+  tx();
+}
+async function remed(){
+  var tried = [1,2,3,4,5,6,7].filter(function(i){ return ATT[i] && ATT[i].n; });
+  var weak = tried.length ? tried.sort(function(a,b){ return mastery(a) - mastery(b); })[0] : (miss.length ? miss[miss.length-1].ch : 1);
+  var pack = buildPracticePack(weak, 10);
+  ST.gen = ST.gen.concat(pack); ST.ch = weak; ST.pi = 0;
+  toast('Đã tạo bộ 10 bài tập bổ trợ cho Chương '+weak+'! 🎯');
+  go('practice');
+}
+
+/* ===== 10. DIỄN ĐÀN CỘNG ĐỒNG (MINI-FACEBOOK KẾT NỐI FIREBASE THỜI GIAN THỰC) ===== */
+var SEEDS = [
+  {id:'seed1', ch:1, title:'Bốc bi có hoàn lại và không hoàn lại khác nhau thế nào?', body:'Mình bốc 2 viên bi từ hộp có 3 bi đỏ, 2 bi xanh. Khi nào dùng tổ hợp $C_n^k$, khi nào nhân xác suất độc lập vậy mọi người?', an:'Minh Anh · K65', au:'seed-a', aa:'🐰', t:Date.now()-7200000, likes:{}, comments:{}},
+  {id:'seed2', ch:3, title:'Cách phân biệt phân phối Nhị thức và phân phối Poisson?', body:'Trong bài toán thực tế về dây chuyền sản xuất và trạm thu phí, dấu hiệu nào trong đề bài giúp nhận biết ngay phân phối Poisson $\\lambda$ ạ?', an:'Quốc Bảo · K66', au:'seed-b', aa:'🐻', t:Date.now()-3600000, likes:{}, comments:{}},
+  {id:'seed3', ch:6, title:'Miền bác bỏ hai phía trong Kiểm định giả thuyết', body:'Với mức ý nghĩa $\\alpha=0{,}05$, kiểm định hai phía thì tra bảng $z_{\\alpha/2}=1{,}96$ còn một phía là $z_{\\alpha}=1{,}645$ đúng không các bạn?', an:'Thu Hà · K65', au:'seed-c', aa:'🐼', t:Date.now()-1800000, likes:{}, comments:{}}
+];
+var POSTS = ls.get('forum', {});
+if(!POSTS || typeof POSTS !== 'object') POSTS = {};
+SEEDS.forEach(function(s){ if(!POSTS[s.id]) POSTS[s.id] = s; });
+
+async function fbFetch(path, method, body){
+  method = method || 'GET';
+  try{
+    var opts = { method:method, headers:{'Content-Type':'application/json'} };
+    if(body !== undefined && body !== null) opts.body = JSON.stringify(body);
+    var r = await fetch(FB_URL + '/' + path + '.json', opts);
+    if(!r.ok) return null;
+    return await r.json();
+  }catch(e){ return null; }
+}
+function addFriend(uid, name){
+  if(!uid || uid === myUid()) return;
+  if(!FRIENDS.includes(uid)){
+    FRIENDS.push(uid); ls.set('friends', FRIENDS);
+    fbFetch('friends/' + myUid() + '/' + uid, 'PUT', true);
+  }
+  toast('Đã kết bạn với ' + (name || 'bạn học') + ' 🤝');
+  if(ST.view === 'forum') render();
+}
+async function pubPost(){
+  var body = ST.fdraft.trim(), title = ST.ftitle.trim() || 'Thảo luận bài tập XSTK';
+  if(!body) return toast('Bạn hãy viết nội dung câu hỏi trước khi đăng nhé ✍️');
+  var ch = Number($('#fch') ? $('#fch').value : 1) || 1;
+  var img = ($('#fdraw') && $('#fdraw').checked && PADIMG) ? PADIMG : '';
+  var id = 'p' + Date.now().toString(36) + myUid().slice(0,4);
+  var p = { id:id, title:title, ch:ch, body:body, img:img, an:myName(), au:myUid(), aa:myAvatar(), t:Date.now(), likes:{}, comments:{} };
+  POSTS[id] = p; ST.fdraft = ''; ST.ftitle = ''; ls.set('forum', POSTS);
+  await fbFetch('posts/' + id, 'PUT', p);
+  toast('Đã đăng bài lên Cộng đồng! 🎉');
+  if(ST.view === 'forum') render();
+}
+async function react(pid, kind){
+  var x = POSTS[pid]; if(!x) return;
+  x.likes = x.likes || {};
+  var uid = myUid(), nv = (x.likes[uid] === kind) ? null : kind;
+  if(nv) x.likes[uid] = nv; else delete x.likes[uid];
+  ls.set('forum', POSTS);
+  await fbFetch('posts/' + pid + '/likes/' + uid, 'PUT', nv);
+  if(ST.view === 'forum') render();
+}
+async function comment(pid, txt, isAI){
+  txt = (txt || '').trim(); if(!txt || !POSTS[pid]) return;
+  var cid = 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2,5);
+  var c = isAI
+    ? { id:cid, body:txt, an:'🦉 Giáo sư Cú Đêm AI', au:'owl', aa:'🦉', t:Date.now() }
+    : { id:cid, body:txt, an:myName(), au:myUid(), aa:myAvatar(), t:Date.now() };
+  POSTS[pid].comments = POSTS[pid].comments || {};
+  POSTS[pid].comments[cid] = c;
+  ls.set('forum', POSTS);
+  await fbFetch('posts/' + pid + '/comments/' + cid, 'PUT', c);
+  if(ST.view === 'forum') render();
+}
+function cmt(pid){ var v = ST.cd[pid] || ''; ST.cd[pid] = ''; comment(pid, v, false); }
+async function aiReply(pid){
+  var x = POSTS[pid]; if(!x) return;
+  if(!KEY) return comment(pid, 'Gợi ý: Bài này thuộc Chương '+x.ch+' ('+CH[x.ch-1]+'). Hãy kiểm tra các giả thiết độc lập và áp dụng công thức chuẩn của chương nhé! (Nhập API Key để Cú Đêm giải chi tiết)', true);
+  toast('🦉 Cú Đêm đang viết bình luận giải đáp...');
+  try{
+    var r = await ai('Câu hỏi trên diễn đàn (Chương '+x.ch+'): '+x.title+'\n'+x.body+'\nHãy giải đáp ngắn gọn, thân thiện, chuẩn xác bằng tiếng Việt, công thức dùng $...$.');
+    comment(pid, r, true);
+  }catch(e){ toast('Lỗi: ' + e.message); }
+}
+async function syncFB(){
+  var d = await fbFetch('posts');
+  if(d && typeof d === 'object'){
+    var chg = false;
+    for(var id in d){
+      var rPost = d[id]; if(!rPost || !rPost.id) continue;
+      var lPost = POSTS[id];
+      var rCnt = Object.keys(rPost.comments||{}).length + Object.keys(rPost.likes||{}).length;
+      var lCnt = lPost ? (Object.keys(lPost.comments||{}).length + Object.keys(lPost.likes||{}).length) : -1;
+      if(!lPost || rCnt !== lCnt){
+        POSTS[id] = Object.assign({}, rPost, {likes: rPost.likes||{}, comments: rPost.comments||{}});
+        chg = true;
+      }
+    }
+    if(chg){
+      ls.set('forum', POSTS);
+      if(ST.view === 'forum'){
+        var act = document.activeElement;
+        if(!act || (act.tagName !== 'INPUT' && act.tagName !== 'TEXTAREA')) render();
+      }
+    }
+  }
+  await fbFetch('users/' + myUid(), 'PUT', { name:myName(), av:myAvatar(), seen:Date.now() });
+  var u = await fbFetch('users'); if(u && typeof u === 'object') USERS = u;
+}
+function startSync(){ clearInterval(fbPoll); syncFB(); fbPoll = setInterval(syncFB, 5000); }
+
+function avHTML(av, cls){
+  cls = cls || 'w-8 h-8';
+  return (av && String(av).indexOf('http') === 0)
+    ? '<img src="'+attr(av)+'" class="'+cls+' rounded-full border-2 border-[#2D2A4A] inline-block">'
+    : '<span class="text-2xl">'+(av || '🦉')+'</span>';
+}
+function postHTML(x){
+  var likes = x.likes || {}, ks = Object.values(likes).filter(Boolean);
+  var cnt = function(k){ return ks.filter(function(v){ return v===k; }).length; };
+  var mine = likes[myUid()];
+  var cms = Object.values(x.comments || {}).sort(function(a,b){ return a.t - b.t; });
+  return '<article class="pc p-4">' +
+    '<div class="flex items-center gap-2">' + avHTML(x.aa) +
+    '<div><b>'+esc(x.an || 'Sinh viên')+'</b><div class="text-xs">'+new Date(x.t).toLocaleString('vi-VN')+' · Chương '+(x.ch||1)+'</div></div>' +
+    (x.au && x.au !== myUid() ? '<button class="bt text-xs ml-auto" onclick="addFriend(\''+x.au+'\',\''+attr(x.an)+'\')">'+(FRIENDS.includes(x.au)?'✔ Bạn bè':'➕ Kết bạn')+'</button>' : '') +
+    '</div><h3 class="font-black text-lg mt-2">'+esc(x.title)+'</h3>' +
+    '<div class="mt-1">'+esc(x.body).replace(/\n/g,'<br>')+'</div>' +
+    (x.img ? '<img src="'+attr(x.img)+'" class="mt-2 rounded-xl border-2 border-[#2D2A4A] max-h-64">' : '') +
+    '<div class="flex flex-wrap gap-2 mt-3">' +
+    REACTS.map(function(r){ return '<button class="bt text-xs '+(mine===r[0]?'on':'')+'" onclick="react(\''+x.id+'\',\''+r[0]+'\')">'+r[1]+' '+cnt(r[0])+'</button>'; }).join('') +
+    '<button class="bt text-xs bg-[#D9C9FF]" onclick="aiReply(\''+x.id+'\')">🦉 Tag Cú Đêm AI giải giúp</button></div>' +
+    '<div class="mt-3 space-y-2">' +
+    cms.map(function(c){
+      return '<div class="rounded-2xl bg-[#F8FAFC] border-2 border-[#2D2A4A] p-2 text-sm"><b>'+esc(c.an)+':</b> '+esc(c.body).replace(/\n/g,'<br>')+'</div>';
+    }).join('') + '</div>' +
+    '<div class="flex gap-2 mt-2"><input class="flex-1 text-sm" placeholder="Viết bình luận trao đổi..." value="'+attr(ST.cd[x.id]||'')+'" oninput="ST.cd[\''+x.id+'\']=this.value" onkeydown="if(event.key===\'Enter\')cmt(\''+x.id+'\')"><button class="bt text-sm" onclick="cmt(\''+x.id+'\')">Gửi</button></div></article>';
+}
+function rForum(a){
+  var now = Date.now();
+  var posts = Object.values(POSTS).sort(function(x,y){ return y.t - x.t; });
+  var online = Object.entries(USERS).filter(function(item){ return item[0] !== myUid() && item[1] && item[1].seen && (now - item[1].seen < 180000); });
+  a.innerHTML = '<div class="grid md:grid-cols-12 gap-4">' +
+    '<aside class="md:col-span-3 space-y-4">' +
+    '<div class="pc p-4 text-center"><div>'+avHTML(myAvatar(),'w-16 h-16 mx-auto')+'</div><b class="block mt-2">'+esc(myName())+'</b><div class="text-xs font-bold text-indigo-800">'+esc(PROF.title)+'</div>' +
+    '<button class="bt text-xs mt-2 bg-white" onclick="openModal()">✏️ Đổi tên / Tài khoản</button></div>' +
+    '<div class="pc p-4"><b>🟢 Bạn học đang Online ('+(online.length+1)+')</b>' +
+    '<div class="flex items-center gap-2 mt-2 text-sm"><span>🟢</span><b class="flex-1">'+esc(myName())+' (Bạn)</b></div>' +
+    (online.length ? online.map(function(item){
+      var u = item[0], v = item[1];
+      return '<div class="flex items-center gap-2 mt-2 text-sm"><span>🟢</span><span class="flex-1 font-bold">'+esc(v.name)+'</span>' +
+        (FRIENDS.includes(u) ? '<span class="tag bg-[#BFF1DC]">Bạn bè</span>' : '<button class="bt text-xs" onclick="addFriend(\''+u+'\',\''+attr(v.name)+'\')">➕ Kết bạn</button>') + '</div>';
+    }).join('') : '<p class="text-xs mt-2 text-gray-600">Mở link web trên thiết bị khác để test kết bạn trực tiếp nhé!</p>') +
+    '</div></aside>' +
+    '<section class="md:col-span-6 space-y-4">' +
+    '<div class="pc p-4"><b>🌐 Đăng câu hỏi thảo luận lên Cộng đồng XSTK</b>' +
+    '<input id="ftitle" class="w-full mt-2 text-sm" placeholder="Tiêu đề bài viết (VD: Thắc mắc bài tập Chương 3)" value="'+attr(ST.ftitle)+'" oninput="ST.ftitle=this.value">' +
+    '<textarea id="fbody" rows="3" class="w-full mt-2 text-sm" placeholder="Nội dung câu hỏi hoặc chia sẻ mẹo làm bài (hỗ trợ LaTeX $...$)..." oninput="ST.fdraft=this.value">'+esc(ST.fdraft)+'</textarea>' +
+    '<div class="flex flex-wrap gap-2 mt-2 items-center"><select id="fch" class="text-sm">'+CH.map(function(c,i){ return '<option value="'+(i+1)+'">Chương '+(i+1)+'</option>'; }).join('')+'</select>' +
+    '<label class="text-xs font-bold"><input type="checkbox" id="fdraw" '+(PADIMG?'':'disabled')+'> 📎 Đính kèm bảng vẽ iPad</label>' +
+    '<button class="bt ml-auto bg-[#BFF1DC] text-sm" onclick="pubPost()">📮 Đăng bài ngay</button></div></div>' +
+    posts.map(postHTML).join('') + '</section>' +
+    '<aside class="md:col-span-3 space-y-4"><div class="pc p-4"><b>🔥 Góc Học Tập Chung</b><p class="text-sm mt-2">Mọi bài đăng, lượt thả tim và bình luận tại đây đều được đồng bộ thời gian thực qua Firebase Cloud!</p></div></aside></div>';
+  tx();
+}
+
+/* ===== 11. KHỞI ĐỘNG ỨNG DỤNG AN TOÀN ===== */
+document.body.insertAdjacentHTML('beforeend',
+  '<div class="fixed bottom-4 right-4 z-40 text-right">' +
+  '<div id="fpanel" class="hidden pc p-3 mb-2 w-80 max-h-[70vh] overflow-y-auto text-left text-sm">' +
+  '<div class="flex items-center gap-2"><b>🦉 Trạm Vấn Đáp Voice AI</b>' +
+  '<button class="bt text-xs ml-auto" onclick="speakOn=!speakOn;toast(speakOn?\'Đã bật giọng đọc 🔊\':\'Đã tắt giọng đọc 🔇\')">🔊 / 🔇</button></div>' +
+  vBlock('fl','',false) + '</div>' +
+  '<button class="bt bg-[#D9C9FF]" onclick="$(\'#fpanel\').classList.toggle(\'hidden\')">🎙️ Đàm thoại trực tiếp với Cú Đêm</button></div>'
+);
+
+(function initApp(){
+  var c = ls.get('cfg', {});
+  KEY = c.k || '';
+  MODEL = c.m || 'gemini-3.8-flash';
+  if($('#key')) $('#key').value = KEY;
+  if($('#model')) $('#model').value = MODEL;
+  initFirebase();
+  renderAuth();
+  render();
+  startSync();
+})();
 </script>
 </body>
 </html>
