@@ -6,10 +6,6 @@
 <title>Cú Đêm · Xác suất & Thống kê</title>
 <script src="https://cdn.tailwindcss.com/3.4.17"></script>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;900&display=swap" rel="stylesheet">
-<!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 <script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']],displayMath:[['$$','$$']]},options:{skipHtmlTags:['script','noscript','style','textarea']}};</script>
 <script async src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js"></script>
 <style>
@@ -48,77 +44,22 @@ textarea,input,select{border:3px solid var(--ink);border-radius:.9rem;padding:.3
 <header class="sticky top-0 z-30 bg-white/90 backdrop-blur border-b-4 border-[#2D2A4A] px-3 py-2 flex flex-wrap items-center gap-2">
   <div class="flex items-center gap-2 mr-auto"><span id="logo"></span><b class="text-lg leading-tight">Cú Đêm<br><span class="text-xs">Xác suất &amp; Thống kê</span></b></div>
   <button id="homeBtn" class="bt hidden" onclick="go('home')">🏠 Về Trang Chủ</button>
-  <div id="authArea" class="flex items-center gap-2"></div>
-  <input id="key" type="password" placeholder="Gemini API Key" class="w-36 text-sm">
-  <input id="model" list="mlist" class="text-sm w-36" placeholder="Tên model"><datalist id="mlist"><option value="gemini-3.8-flash"><option value="gemini-3.0-flash"><option value="gemini-2.5-flash"></datalist>
+  <input id="key" type="password" placeholder="Gemini API Key" class="w-40 text-sm">
+  <input id="model" list="mlist" class="text-sm w-44" placeholder="Tên model"><datalist id="mlist"><option value="gemini-3.8-flash"><option value="gemini-3.0-flash"><option value="gemini-2.5-flash"></datalist>
   <button class="bt text-sm" onclick="saveKey()">💾 Lưu Key</button>
 </header>
 <nav id="nav" class="flex gap-2 flex-wrap px-3 py-2 max-w-5xl mx-auto"></nav><main id="app" class="max-w-5xl mx-auto p-3 md:p-6"></main>
 <div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 pc px-4 py-2 font-extrabold hidden z-50"></div>
 
 <script>
-/* ===== Tiện ích cơ bản ===== */
+/* ===== Tiện ích ===== */
 const $=s=>document.querySelector(s);
 const ls={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
 const tx=()=>{try{window.MathJax&&MathJax.typesetPromise&&MathJax.typesetPromise()}catch(e){}};
-const toast=m=>{const t=$('#toast');if(!t)return;t.textContent=m;t.classList.remove('hidden');clearTimeout(toast.h);toast.h=setTimeout(()=>t.classList.add('hidden'),3200)};
+const toast=m=>{const t=$('#toast');t.textContent=m;t.classList.remove('hidden');clearTimeout(toast.h);toast.h=setTimeout(()=>t.classList.add('hidden'),2600)};
 const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
-const attr=x=>esc(x).replace(/"/g,'&quot;');
-
-/* ===== Cấu hình Firebase Auth & Realtime Database ===== */
-const firebaseConfig = {
-  apiKey: "AIzaSyAcSJ9u6JNPDZE6JX-LxxXLFehDHEm6Bo",
-  authDomain: "web-xstk.firebaseapp.com",
-  databaseURL: "https://web-xstk-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "web-xstk",
-  storageBucket: "web-xstk.firebasestorage.app",
-  messagingSenderId: "129353981164",
-  appId: "1:129353981164:web:bbd22cf1216b7ae0f759c9",
-  measurementId: "G-CMNJ4BNPVE"
-};
-let auth=null,currentUser=null;
-try{
-  if(window.firebase){
-    firebase.initializeApp(firebaseConfig);
-    auth=firebase.auth();
-    auth.onAuthStateChanged(u=>{
-      currentUser=u;
-      if(u){
-        PROF.name=u.displayName||PROF.name;
-        ls.set('prof',PROF);
-      }
-      renderAuth();
-      if(ST.view==='forum'||ST.view==='stats')render();
-      syncFB();
-    });
-  }
-}catch(e){console.warn('Firebase init:',e)}
-
-function loginGoogle(){
-  if(!auth)return toast('Đang tải dịch vụ Google, vui lòng thử lại sau vài giây!');
-  const p=new firebase.auth.GoogleAuthProvider();
-  auth.signInWithPopup(p).then(()=>{
-    toast('Đăng nhập Google thành công! 🎉');
-  }).catch(e=>{
-    if(e.code==='auth/unauthorized-domain'){
-      toast('⚠️ Cần thêm tên miền anhtu20347.github.io vào mục Authorized domains trên Firebase!');
-    }else{
-      toast('Lỗi đăng nhập: '+e.message);
-    }
-  });
-}
-function logoutGoogle(){if(auth)auth.signOut().then(()=>{currentUser=null;renderAuth();toast('Đã đăng xuất tài khoản Google')})}
-function renderAuth(){
-  const el=$('#authArea');if(!el)return;
-  if(currentUser){
-    el.innerHTML=`<div class="flex items-center gap-2 bg-[#BFF1DC] px-3 py-1 rounded-full border-2 border-[#2D2A4A] text-xs font-black">${currentUser.photoURL?`<img src="${currentUser.photoURL}" class="w-6 h-6 rounded-full border border-[#2D2A4A]">`:'<span>🟢</span>'}<span>${esc(currentUser.displayName||currentUser.email)}</span><button class="underline text-red-600 ml-1" onclick="logoutGoogle()">Thoát</button></div>`;
-  }else{
-    el.innerHTML=`<button class="bt text-sm bg-white" onclick="loginGoogle()">🔐 Đăng nhập Google</button>`;
-  }
-}
-
 let KEY='',MODEL='gemini-3.8-flash';
-const ST={view:'home',ch:1,type:'all',lv:'all',gen:[],ex:null,cfg:{scope:'all',n:5,min:15},ui:{},tch:1,tlv:'Vận dụng',cnt:10,pi:0,fdraft:'',ftitle:'',cd:{}};
+const ST={view:'home',ch:1,type:'all',lv:'all',gen:[],ex:null,cfg:{scope:'all',n:5,min:15},ui:{}};
 const U=id=>ST.ui[id]||(ST.ui[id]={msgs:[],run:true});
 let prog=ls.get('prog',{done:[],streak:0,last:''});
 function markDone(id){const d=new Date(),f=x=>x.toDateString();if(!prog.done.includes(id))prog.done.push(id);
@@ -136,19 +77,19 @@ const owl=(s=120,w=true)=>`<svg viewBox="0 0 200 200" width="${s}" height="${s}"
 <g fill="#FFB84D" stroke="#2D2A4A" stroke-width="3"><ellipse cx="80" cy="186" rx="14" ry="6"/><ellipse cx="120" cy="186" rx="14" ry="6"/></g></svg>`;
 $('#logo').innerHTML=owl(42,false);
 
-/* ===== Kết nối Gemini AI ===== */
+/* ===== Gemini ===== */
 async function ai(contents,sys){if(!KEY)throw new Error('nokey');
  if(typeof contents==='string')contents=[{role:'user',parts:[{text:contents}]}];
  const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${encodeURIComponent(KEY)}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({systemInstruction:{parts:[{text:sys||''}]},contents})});
  const j=await r.json();if(!r.ok)throw new Error(j.error&&j.error.message||r.status);
  return(j.candidates&&j.candidates[0].content.parts||[]).map(p=>p.text||'').join('')}
 function safeJSON(t){t=String(t).replace(/```json|```/g,'').trim();const a=Math.min(...['[','{'].map(c=>t.indexOf(c)).filter(i=>i>=0)),b=Math.max(t.lastIndexOf(']'),t.lastIndexOf('}'));t=t.slice(a,b+1);
- try{return JSON.parse(t)}catch(e){return JSON.parse(t.replace(/\\(?![\\"\/bfnrtu])/g,'\\\\'))}}
+ try{return JSON.parse(t)}catch(e){return JSON.parse(t.replace(/(?<!\\)\\(?![\\"\/u])/g,'\\\\'))}}
 const normQ=(o,i,def)=>({id:'g'+Date.now()+i,ch:+o.ch||def.ch||1,type:o.type==='essay'?'essay':'mcq',lv:o.lv||def.lv||'Vận dụng',q:o.q,opts:o.opts||[],ans:+o.ans||0,hint:o.hint||'',sol:o.sol||'',viz:o.visual3DType||o.viz||'bellcurve_3d',vp:o.vp||{},m:o.m||''});
 async function genAI(def,n){const p=`Tạo ${n} bài toán Xác suất & Thống kê bằng tiếng Việt. Chương ${def.ch||'bất kỳ trong 7 chương'}, hình thức ${def.type==='essay'?'tự luận':'trắc nghiệm 4 đáp án'}, độ khó ${def.lv||'Vận dụng'}. Chỉ trả về JSON mảng, không markdown.${def.note?" Yêu cầu thêm: "+def.note+".":""} Công thức LaTeX dùng $...$ và PHẢI viết hai dấu gạch chéo ngược (\\\\frac). Mỗi phần tử: {"ch":số,"type":"mcq"|"essay","lv":"Cơ bản|Vận dụng|Vận dụng cao","q":"đề","opts":["A","B","C","D"],"ans":0-3,"hint":"gợi ý","sol":"lời giải chi tiết","visual3DType":"factory_3d|dice_3d|bellcurve_3d|medical_3d|finance_3d|queue_3d|sampling_3d|abtest_3d|dice_cards_3d","vp":{"mu":số,"sigma":số,"p":số 0-1,"label":"tóm tắt tham số"},"m":"Dạng toán;..|Dữ kiện;..|Công thức;..|Bước giải;Bẫy hay sai"}`;
  return safeJSON(await ai(p,'Bạn là Cú Đêm, trợ giảng Xác suất Thống kê.')).map((o,i)=>normQ(o,i,def))}
 
-/* ===== Ngân hàng Dữ liệu mẫu ===== */
+/* ===== Dữ liệu mẫu ===== */
 const CH=['Xác suất và công thức tính xác suất','Biến ngẫu nhiên','Phân phối xác suất của biến ngẫu nhiên','Mẫu ngẫu nhiên và các số đặc trưng của mẫu','Khoảng ước lượng','Kiểm định giả thuyết trong thống kê','So sánh 2 tham số'];
 const M=(id,ch,type,lv,q,opts,ans,hint,sol,viz,vp,m)=>({id,ch,type,lv,q,opts,ans,hint,sol,viz,vp,m});
 const BANK=[
@@ -164,7 +105,7 @@ M('s9',1,'essay','Vận dụng cao','Lô hàng 10 sản phẩm có 3 sản phẩ
 M('s10',3,'essay','Vận dụng','Mỗi sản phẩm lỗi với xác suất $0{,}1$ độc lập. Kiểm tra 5 sản phẩm, tính xác suất có ít nhất 1 sản phẩm lỗi.',[],0,'Dùng biến cố đối: không có sản phẩm lỗi nào.','$X\\sim B(5;0{,}1)$; $P(X\\ge1)=1-0{,}9^5\\approx0{,}4095$.','factory_3d',{p:0.1,label:'X~B(5; 0,1)'},'Phân phối nhị thức;Chương 3|$n=5;p=0,1$|$P(X\\ge1)=1-P(X=0)$|Dùng biến cố đối;Tính $0,9^5$;Bẫy: cộng 5 lần 0,1')];
 const SAMPLE_EXAM=BANK.filter(q=>q.type==='mcq');
 
-/* ===== Mô phỏng 3D ===== */
+/* ===== Mô phỏng 3D (canvas, không cần thư viện) ===== */
 const rgb=(c,k)=>`rgb(${c.map(v=>Math.min(255,v*k|0))})`;
 function box(x,y,z,w,h,d,c){const a=x-w/2,b=x+w/2,z0=z-d/2,z1=z+d/2,y1=y+h;
  return[[[[a,y1,z0],[b,y1,z0],[b,y1,z1],[a,y1,z1]],c,1.12],[[[a,y,z0],[b,y,z0],[b,y1,z0],[a,y1,z0]],c,.9],[[[a,y,z1],[b,y,z1],[b,y1,z1],[a,y1,z1]],c,.7],[[[a,y,z0],[a,y,z1],[a,y1,z1],[a,y1,z0]],c,.8],[[[b,y,z0],[b,y,z1],[b,y1,z1],[b,y1,z0]],c,.6]].map(f=>({v:f[0],col:rgb(f[1],f[2])}))}
@@ -174,7 +115,8 @@ function scene(type,t,p){const o={polys:[],dots:[],txt:[]},hash=n=>((n*9301+4929
  else if(type==='factory_3d'){const pr=p.p||.1;o.polys=box(0,-16,0,460,16,80,[130,130,160]);
   for(let k=0;k<8;k++){const u=k*60+t*50,id=k+8*Math.floor(u/480),x=(u%480)-240,bad=hash(id+1)<pr*2.2;
    o.polys.push(...box(x,0,0,32,28,32,bad?[255,120,130]:[120,225,175]))}
-  o.polys.push(...box(0,0,-44,6,70,6,[255,220,90]),...box(0,0,44,6,70,6,[255,220,90]),...box(0,64,0,6,6,94,[255,220,90]))}
+  o.polys.push(...box(0,0,-44,6,70,6,[255,220,90]),...box(0,0,44,6,70,6,[255,220,90]),...box(0,64,0,6,6,94,[255,220,90]));
+  o.beam=true}
  else if(type==='bellcurve_3d'){const s=Math.max(.3,(p.sigma||15)/15);
   for(let i=-6;i<=6;i++)for(let j=-3;j<=3;j++){const h=(150/Math.sqrt(s))*Math.exp(-i*i/(8*s*s))*Math.exp(-j*j/6)*(1+.08*Math.sin(t*3+i+j))+4,k=Math.min(1,h/150);
    o.polys.push(...box(i*26,0,j*26,22,h,22,[180-70*k|0,150+80*k|0,255-60*k|0]))}}
@@ -205,7 +147,7 @@ addEventListener('pointermove',e=>{if(drag){drag.c.__ry=(drag.c.__ry||0)+(e.clie
 addEventListener('pointerup',()=>drag=null);
 function runT(id){const c=document.querySelector(`canvas[data-q="${id}"]`);if(!c)return;c.__run=c.__run===false;c.__t=c.__run?0:c.__t;U(id).run=c.__run;document.getElementById('rb_'+id).textContent=c.__run?'⏸ Dừng':'▶ Chạy mô phỏng 3D'}
 
-/* ===== Thẻ câu hỏi ===== */
+/* ===== Thẻ câu hỏi (dùng cho Luyện tập & Chữa bài) ===== */
 const QM={};
 const LB=['A','B','C','D'];
 function qaHTML(q,mode){const u=U(q.id),rev=mode==='r',pk=rev?ST.ex.ans[q.id]:u.pick,shown=rev||(u.pick!=null);
@@ -257,14 +199,15 @@ const NAV=[['home','🏠 Trang chủ'],['practice','🎯 Luyện tập'],['exam'
 const MODES={mcq:'Trắc nghiệm',essay:'Tự luận',exam:'Thi thử'};
 const RUBRIC=[{k:'Nhận diện dạng toán & gọi biến',p:2},{k:'Viết đúng công thức',p:3},{k:'Thay số & tính chuẩn xác',p:3.5},{k:'Kết luận & ý nghĩa thực tế',p:1.5}];
 let miss=ls.get('miss',[]);
-let PSTK=[],last=[0,0],down=false,upFile=null,PADIMG='';
+let PSTK=[],last=[0,0],down=false,upFile=null;
 const PEN={c:'#2D2A4A',w:4,e:0};
 const scoreOf=t=>{const m=String(t).match(/(\d+(?:[.,]\d+)?)\s*\/\s*10/);return m?parseFloat(m[1].replace(',','.')):null};
 function logMiss(q,mode){if(miss.some(m=>m.id===q.id&&m.mode===mode))return;miss.push({id:q.id,ch:q.ch,mode,q:q.q,ans:q.type==='mcq'?q.opts[q.ans]:'Xem lời giải',date:Date.now()});ls.set('miss',miss)}
 function clearMiss(){miss=[];ls.set('miss',miss);render()}
 function render(){const a=$('#app');$('#homeBtn').classList.toggle('hidden',ST.view==='home');$('#nav').innerHTML=NAV.map(([k,l])=>`<button class="bt text-sm ${ST.view===k?'on':''}" onclick="go('${k}')">${l}</button>`).join('');({home:rHome,practice:rPractice,exam:rExam,tutor:rTutor,stats:rStats,forum:rForum})[ST.view](a);scrollTo(0,0);tx()}
 
-/* ===== Voice AI ===== */
+Object.assign(ST,{tch:1,tlv:'Vận dụng',cnt:10,pi:0});
+/* --- Voice AI: Web Speech API (vi-VN) --- */
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
 let VT='fl',VQ=null,vRec=null,vOn=false,speakOn=true,VNOANS=false;
 function allQ(){return [...BANK,...ST.gen]}
@@ -285,21 +228,15 @@ async function vAsk(t){const out=$('#o_'+VT);if(!t||!out)return;out.innerHTML='�
  try{const r=await ai([{role:'user',parts:[{text:t}]}],'Bạn là Giáo sư Cú Đêm, trả lời vấn đáp bằng tiếng Việt, ngắn gọn 3-5 câu, thân thiện, gợi mở kiểu Socratic khi có thể. Công thức LaTeX dùng $...$.'+(q?`\nĐề đang làm: ${q.q}\n${VNOANS?'Đây là bài thi: tuyệt đối không tiết lộ đáp án, chỉ gợi ý nhẹ.':'Lời giải mẫu: '+q.sol}`:''));
   out.innerHTML='🦉 '+r.replace(/\n/g,'<br>');speak(r);tx()}catch(e){out.textContent='Lỗi: '+e.message}}
 document.body.insertAdjacentHTML('beforeend',`<div class="fixed bottom-4 right-4 z-40 text-right"><div id="fpanel" class="hidden pc p-3 mb-2 w-80 max-h-[70vh] overflow-y-auto text-left text-sm"><div class="flex items-center gap-2"><b>🦉 Trạm Vấn Đáp Voice AI</b><button class="bt text-xs ml-auto" onclick="speakOn=!speakOn;toast(speakOn?'Đã bật tiếng 🔊':'Đã tắt tiếng 🔇')">🔊 / 🔇</button></div>${vBlock('fl','')}</div><button class="bt" onclick="$('#fpanel').classList.toggle('hidden')">🎙️ Đàm thoại trực tiếp với Cú Đêm</button></div>`);
-
-/* ===== Tutor: tạo đề mới & chụp ảnh đề ===== */
+/* --- Tutor: AI-generated and custom problems --- */
 async function aiTutorNew(){if(!KEY)return toast('Nhập API Key để AI ra đề nha 🦉');const req=(($('#treq')||{}).value||'').trim();
  toast('🦉 Đang ra đề...');
  try{const r=await genAI({ch:ST.tch,type:'essay',lv:ST.tlv,note:req},1);if(!r.length)throw new Error('Không có đề');ST.gen.push(...r);ST.tq=r[0].id;render()}catch(e){toast('Lỗi: '+e.message)}}
 function customTutor(){const t=(($('#tcustom')||{}).value||'').trim();if(!t)return toast('Dán đề bài vào trước nhé ✍️');
  const q={id:'u'+Date.now(),ch:ST.tch,type:'essay',lv:'Đề tự nhập',q:t,opts:[],ans:0,hint:'',sol:'',viz:'bellcurve_3d',vp:{},m:''};
  ST.gen.push(q);ST.tq=q.id;render()}
-async function problemPhoto(inp){const f=inp.files[0];if(!f)return;if(!KEY)return toast('Nhập API Key để Cú Đêm đọc đề nha 🦉');
- const r=new FileReader();r.onload=async()=>{toast('🦉 Đang đọc đề trong ảnh...');
-  try{const t=await ai([{role:'user',parts:[{text:'Chép lại chính xác đề bài toán trong ảnh, giữ công thức bằng LaTeX $...$. Chỉ trả về nội dung đề, không lời dẫn.'},{inlineData:{mimeType:f.type||'image/jpeg',data:r.result.split(',')[1]}}]}],'Bạn là trợ lý OCR toán học tiếng Việt.');
-   const q={id:'u'+Date.now(),ch:ST.tch,type:'essay',lv:'Đề chụp ảnh',q:t.trim(),opts:[],ans:0,hint:'',sol:'',viz:'bellcurve_3d',vp:{},m:''};ST.gen.push(q);ST.tq=q.id;render()}
-  catch(e){toast('Lỗi: '+e.message)}};r.readAsDataURL(f)}
 
-/* ===== Hồ sơ & chẩn đoán lỗi sai ===== */
+/* --- Thống kê & chẩn đoán lỗi sai --- */
 let PROF=ls.get('prof',{name:'',sid:'',cls:'',title:'Cú Đêm Tập Sự'});
 const TITLES=['Cú Đêm Tập Sự','Cú Đêm Chăm Chỉ','Cú Đêm Thông Thái','Giáo Sư Cú Đêm'];
 let ATT=ls.get('att',{});
@@ -307,13 +244,10 @@ function recAtt(q,ok){const a=ATT[q.ch]||{n:0,ok:0};a.n++;if(ok)a.ok++;ATT[q.ch]
 function mastery(ch){const a=ATT[ch];return a&&a.n?Math.round(a.ok/a.n*100):0}
 function xp(){return prog.done.length*10+prog.streak*5}
 function saveProf(){PROF={name:$('#pn').value.trim(),sid:$('#psid').value.trim(),cls:$('#pcls').value.trim(),title:$('#ptitle').value};ls.set('prof',PROF);toast('Đã lưu hồ sơ 🎓')}
-function reviewMiss(id){const q=allQ().find(x=>x.id===id);if(!q)return toast('Câu này là đề AI tạo nên đã mất sau khi tải lại trang 🦉');
- ST.ch=q.ch;ST.type='all';ST.lv='all';ST.pi=Math.max(0,filtered().findIndex(x=>x.id===id));go('practice')}
 function rStats(a){const lvl=Math.floor(xp()/100)+1;const vals=Object.values(ATT);const tot=vals.reduce((s,x)=>s+x.n,0),okT=vals.reduce((s,x)=>s+x.ok,0);const avg=tot?Math.round(okT/tot*100):0;
  const mx=Math.max(1,...CH.map((_,i)=>miss.filter(m=>m.ch===i+1).length));
- a.innerHTML=`<div class="grid md:grid-cols-3 gap-4"><div class="pc p-5"><h2 class="text-xl font-black">🪪 Thẻ sinh viên</h2>
- <div class="text-center mt-2">${currentUser&&currentUser.photoURL?`<img src="${currentUser.photoURL}" class="w-16 h-16 rounded-full mx-auto border-2 border-[#2D2A4A]">`:'<div class="text-5xl">🦉</div>'}</div>
- <label class="block text-sm font-bold mt-2">Họ tên<input id="pn" class="w-full" value="${esc(currentUser?currentUser.displayName:PROF.name)}"></label>
+ a.innerHTML=`<div class="grid md:grid-cols-3 gap-4"><div class="pc p-5"><h2 class="text-xl font-black">🪪 Thẻ sinh viên</h2><div class="text-center text-5xl mt-2">🦉</div>
+ <label class="block text-sm font-bold mt-2">Họ tên<input id="pn" class="w-full" value="${esc(PROF.name)}"></label>
  <label class="block text-sm font-bold mt-2">Mã số SV<input id="psid" class="w-full" value="${esc(PROF.sid)}"></label>
  <label class="block text-sm font-bold mt-2">Trường / Lớp<input id="pcls" class="w-full" value="${esc(PROF.cls)}"></label>
  <label class="block text-sm font-bold mt-2">Danh hiệu<select id="ptitle" class="w-full">${TITLES.map(t=>`<option ${PROF.title===t?'selected':''}>${t}</option>`).join('')}</select></label>
@@ -322,7 +256,7 @@ function rStats(a){const lvl=Math.floor(xp()/100)+1;const vals=Object.values(ATT
  <div class="pc p-5 md:col-span-2"><h2 class="text-xl font-black">🧭 Năng lực 7 chương</h2>${CH.map((c,i)=>{const m=mastery(i+1),n=ATT[i+1]?ATT[i+1].n:0;return `<div class="my-2 text-sm"><div class="flex justify-between font-bold"><span>Ch${i+1}. ${c}</span><span>${n?m+'%':'chưa làm'}</span></div><div class="bg-white border-2 border-[#2D2A4A] rounded-full h-4 overflow-hidden"><div class="h-full bg-[#BFF1DC]" style="width:${m}%"></div></div></div>`}).join('')}
  <h3 class="font-black mt-4 mb-1">📊 Số câu sai theo chương</h3><div class="flex gap-1 items-end h-20">${CH.map((_,i)=>{const n=miss.filter(m=>m.ch===i+1).length;return `<div class="flex-1 bg-[#FFD2D0] border-2 border-[#2D2A4A] rounded-t-lg" style="height:${Math.max(4,n/mx*100)}%" title="Ch${i+1}: ${n} câu sai"></div>`}).join('')}</div>
  <div class="flex gap-2 flex-wrap mt-4"><button class="bt" onclick="analyzeMiss()">🦉 AI Phân Tích Hồ Sơ & Lỗi Sai</button><button class="bt" onclick="remed()">🎯 Tạo Bộ Bài Tập Khắc Phục Lỗ Hổng</button><button class="bt" onclick="clearMiss()">🗑️ Xoá lịch sử lỗi</button></div><div id="ana" class="mt-4"></div>
- <h3 class="font-black mt-5">Lịch sử câu sai gần đây</h3><div class="max-h-48 overflow-y-auto">${miss.length?miss.slice().reverse().slice(0,20).map(m=>`<div class="opt" onclick="reviewMiss('${m.id}')"><b>[Ch ${m.ch} · ${MODES[m.mode]}]</b>${m.q}<br><span class="text-sm">Đáp án: ${m.ans}</span></div>`).join(''):'<p>Chưa có lỗi sai nào. Giỏi quá 🎉</p>'}</div></div></div>`;tx()}
+ <h3 class="font-black mt-5">Lịch sử câu sai gần đây</h3><div class="max-h-48 overflow-y-auto">${miss.length?miss.slice().reverse().slice(0,20).map(m=>`<div class="opt" onclick="reviewMiss('${m.id}')"><b>[Ch ${m.ch} · ${MODES[m.mode]}]</b> ${m.q}<br><span class="text-sm">Đáp án: ${m.ans}</span></div>`).join(''):'<p>Chưa có lỗi sai nào. Giỏi quá 🎉</p>'}</div></div></div>`;tx()}
 async function remed(){if(!KEY)return toast('Nhập API Key để Cú Đêm tạo bài nha 🦉');
  const tried=CH.map((_,i)=>i+1).filter(i=>ATT[i]&&ATT[i].n);const weak=tried.length?tried.sort((a,b)=>mastery(a)-mastery(b))[0]:1;
  toast('🦉 Đang soạn bộ bài khắc phục...');
@@ -330,10 +264,10 @@ async function remed(){if(!KEY)return toast('Nhập API Key để Cú Đêm tạ
 async function analyzeMiss(){const el=$('#ana');if(!KEY)return toast('Nhập API Key để Cú Đêm phân tích nha 🦉');if(!miss.length)return toast('Chưa có lỗi sai nào để phân tích 🎉');
  el.innerHTML='🦉 Đang phân tích...';
  try{const list=miss.slice(-30).map(m=>`Ch${m.ch} [${MODES[m.mode]}] ${m.q} | Đáp án: ${m.ans}`).join('\n');
-  el.innerHTML='<div class="pc p-4 bg-[#F3EEFF]">'+(await ai(`Lịch sử lỗi sai của sinh viên:\n${list}\nHãy phân tích: (1) Nhận định chung về bản chất lỗi sai; (2) Lộ trình khắc phục cụ thể theo từng nhóm lỗi. Tiếng Việt, ngắn gọn, công thức LaTeX dùng $...$.`,'Bạn là Cú Đêm, trợ giảng Xác suất Thống kê Gen Z, thân thiện.')).replace(/\n/g,'<br>')+'</div>'}
+  el.innerHTML='<div class="pc p-4 bg-[#F3EEFF]">'+(await ai(`Lịch sử lỗi sai của sinh viên:\n${list}\nHãy phân tích: (1) Nhận định chung về bản chất lỗi sai (ví dụ nhầm phân phối Nhị thức với Siêu bội, quên điều kiện phân phối Chuẩn, sai miền bác bỏ); (2) Lộ trình khắc phục cụ thể theo từng nhóm lỗi. Tiếng Việt, ngắn gọn, công thức LaTeX dùng $...$.`,'Bạn là Cú Đêm, trợ giảng Xác suất Thống kê Gen Z, thân thiện.')).replace(/\n/g,'<br>')+'</div>'}
  catch(e){el.innerHTML='Lỗi: '+esc(e.message)}tx()}
 
-/* ===== AI Tutor & bảng iPad ===== */
+/* --- AI Tutor & bảng iPad --- */
 function rTutor(a){const all=[...BANK,...ST.gen];const cur=all.find(q=>q.id===ST.tq)||all[0];ST.tq=cur.id;
  a.innerHTML=`<div class="grid md:grid-cols-5 gap-4"><div class="pc p-4 md:col-span-2"><h2 class="text-xl font-black">🎙️ AI Tutor & Bảng iPad</h2>
  <select class="w-full mt-2" onchange="ST.tq=this.value;render()">${all.map(q=>`<option value="${q.id}" ${q.id===cur.id?'selected':''}>Ch${q.ch} · ${q.q.replace(/\$/g,'').slice(0,50)}…</option>`).join('')}</select>
@@ -363,7 +297,7 @@ function initPad(){const c=$('#ipad'),g=c.getContext('2d');PSTK=[];down=false;
  c.onpointerup=c.onpointercancel=()=>{down=false;PADIMG=c.toDataURL('image/png')}}
 function undoPad(){const c=$('#ipad');if(PSTK.length)c.getContext('2d').putImageData(PSTK.pop(),0,0)}
 function clearPad(){const c=$('#ipad');snap();c.getContext('2d').clearRect(0,0,c.width,c.height);PADIMG=''}
-function symPad(s){const c=$('#ipad'),g=c.getContext('2d');snap();g.globalCompositeOperation='source-over';g.fillStyle=PEN.c;g.font='700 44px Nunito';g.fillText(s,60+Math.random()*380,110+Math.random()*250);PADIMG=c.toDataURL('image/png')}
+function symPad(s){const c=$('#ipad'),g=c.getContext('2d');snap();g.globalCompositeOperation='source-over';g.fillStyle=PEN.c;g.font='700 44px Nunito';g.fillText(s,60+Math.random()*380,110+Math.random()*250)}
 function loadUp(inp){const f=inp.files[0];if(!f)return;if(!/image\/(png|jpeg)|application\/pdf/.test(f.type))return toast('Chỉ nhận ảnh PNG/JPG hoặc PDF nha 📎');
  const r=new FileReader();r.onload=()=>{upFile={mime:f.type,data:r.result.split(',')[1]};$('#upname').textContent='📎 '+f.name;
   $('#prev').innerHTML=f.type==='application/pdf'?`<div class="font-bold">📄 Đã đính kèm PDF: ${esc(f.name)}</div>`:`<img src="${r.result}" class="max-h-48 rounded-xl border-2 border-[#2D2A4A]">`};r.readAsDataURL(f)}
@@ -375,23 +309,20 @@ async function gradeTutor(){const all=[...BANK,...ST.gen];const q=all.find(x=>x.
   const c=$('#ipad'),t=document.createElement('canvas');t.width=c.width;t.height=c.height;const tg=t.getContext('2d');tg.fillStyle='#fff';tg.fillRect(0,0,t.width,t.height);tg.drawImage(c,0,0);
   src={mimeType:'image/png',data:t.toDataURL('image/png').split(',')[1]}}
  el.innerHTML='🦉 Cú Đêm đang đọc bài...';
- const prompt=`Đề: ${q.q}\nLời giải mẫu: ${q.sol}\nBarem:\n${RUBRIC.map(r=>`- ${r.k}:${r.p} điểm`).join('\n')}\nĐọc bài làm viết tay trong ảnh/PDF đính kèm. Chấm từng mục theo barem, chỉ rõ dòng nào sai công thức hoặc tính nhầm, nêu lời khuyên sửa. Cuối cùng ghi đúng dạng "Tổng: X/10". Tiếng Việt, công thức LaTeX dùng $...$.`;
+ const prompt=`Đề: ${q.q}\nLời giải mẫu: ${q.sol}\nBarem:\n${RUBRIC.map(r=>`- ${r.k}: ${r.p} điểm`).join('\n')}\nĐọc bài làm viết tay trong ảnh/PDF đính kèm. Chấm từng mục theo barem, chỉ rõ dòng nào sai công thức hoặc tính nhầm, nêu lời khuyên sửa. Cuối cùng ghi đúng dạng "Tổng: X/10". Tiếng Việt, công thức LaTeX dùng $...$.`;
  try{const t=await ai([{role:'user',parts:[{text:prompt},{inlineData:src}]}],'Bạn là Cú Đêm, giảng viên Gen Z chấm bài nghiêm túc và thân thiện.');
   el.innerHTML=`<div class="pc p-4 bg-[#EFFFF8]">${t.replace(/\n/g,'<br>')}</div>`;
   const sc=scoreOf(t);if(sc!==null){recAtt(q,sc>=5);if(sc<5)logMiss(q,'essay')}}
  catch(e){el.innerHTML='Lỗi: '+esc(e.message)}tx()}
 
-/* ===== Trang chủ & Khu Luyện Tập ===== */
-function rHome(a){a.innerHTML=`<section class="pc p-5 flex flex-wrap items-center gap-4 bg-white"><div class="float">${owl(150)}</div><div class="flex-1 min-w-[220px]"><div class="inline-block pc px-3 py-1 text-sm mb-2" style="box-shadow:0 3px 0 #2D2A4A">👋 Chào ${esc(myName())}! Hôm nay mình cùng cứu nét kiến thức nhé!</div>
+function rHome(a){a.innerHTML=`<section class="pc p-5 flex flex-wrap items-center gap-4 bg-white"><div class="float">${owl(150)}</div><div class="flex-1 min-w-[220px]"><div class="inline-block pc px-3 py-1 text-sm mb-2" style="box-shadow:0 3px 0 #2D2A4A">👋 Chào cậu! Hôm nay mình cùng cứu nét kiến thức nhé!</div>
 <h1 class="text-3xl md:text-4xl font-black">Xác suất &amp; Thống kê không đáng sợ, có Cú Đêm lo!</h1><p class="mt-1 font-bold">Luyện từng chút, thi thử thật chăm – điểm số sẽ nở hoa 🌸</p>
 <div class="flex gap-3 mt-3 flex-wrap"><span class="tag bg-[#BFF1DC] py-1 text-base">🏆 ${prog.done.length} bài đã chinh phục</span><span class="tag bg-[#FFD2D0] py-1 text-base">🔥 ${prog.streak} ngày chăm học</span></div></div></section>
 <div class="grid md:grid-cols-2 gap-6 mt-8">
 <button onclick="go('practice')" class="pc p-5 text-left bt" style="background:linear-gradient(135deg,#D9C9FF,#BFF1DC);border-radius:1.5rem;box-shadow:0 8px 0 #2D2A4A"><svg viewBox="0 0 120 70" class="w-28"><polygon points="60,6 100,26 60,46 20,26" fill="#FFF1B8" stroke="#2D2A4A" stroke-width="3"/><polygon points="20,26 60,46 60,66 20,46" fill="#FFD2D0" stroke="#2D2A4A" stroke-width="3"/><polygon points="100,26 60,46 60,66 100,46" fill="#BFF1DC" stroke="#2D2A4A" stroke-width="3"/></svg>
 <h2 class="text-2xl font-black mt-2">🎯 Khu Luyện Tập Chủ Động</h2><p class="font-bold mt-1">Luyện bài tập Trắc nghiệm &amp; Tự luận thực tế qua 7 chương, có mô phỏng 3D, Bản đồ tư duy và Vấn đáp trực tiếp tại từng câu.</p></button>
 <button onclick="go('exam')" class="pc p-5 text-left bt" style="background:linear-gradient(135deg,#FFD2D0,#FFF1B8);border-radius:1.5rem;box-shadow:0 8px 0 #2D2A4A"><svg viewBox="0 0 120 70" class="w-28"><circle cx="60" cy="38" r="28" fill="#fff" stroke="#2D2A4A" stroke-width="4"/><line x1="60" y1="38" x2="60" y2="18" stroke="#2D2A4A" stroke-width="4"/><line x1="60" y1="38" x2="74" y2="46" stroke="#FF7A8A" stroke-width="4"/><rect x="52" y="4" width="16" height="6" rx="2" fill="#2D2A4A"/></svg>
-<h2 class="text-2xl font-black mt-2">⏰ Đấu Trường Thi Thử</h2><p class="font-bold mt-1">Thi thử bấm giờ như thi thật, chấm điểm tự động và mở khóa Bản đồ tư duy + Vấn đáp giải đáp thắc mắc ngay sau khi nộp bài.</p></button>
-<button onclick="go('tutor')" class="pc p-5 text-left bt" style="background:linear-gradient(135deg,#BFF1DC,#D9C9FF);border-radius:1.5rem;box-shadow:0 8px 0 #2D2A4A"><div class="text-5xl">🎙️✍️</div><h2 class="text-2xl font-black mt-2">AI Tutor &amp; Bảng iPad</h2><p class="font-bold mt-1">Viết tay lên bảng iPad hoặc tải ảnh/PDF bài làm, Cú Đêm chấm theo barem điểm bạn tự chỉnh.</p></button>
-<button onclick="go('forum')" class="pc p-5 text-left bt" style="background:linear-gradient(135deg,#FFF1B8,#FFD2D0);border-radius:1.5rem;box-shadow:0 8px 0 #2D2A4A"><div class="text-5xl">🌐🦉</div><h2 class="text-2xl font-black mt-2">Diễn Đàn Cộng Đồng XSTK</h2><p class="font-bold mt-1">Đăng nhập Google kết nối bạn học thời gian thực, đăng bài, thả cảm xúc và tag Cú Đêm AI giải giúp.</p></button></div>`}
+<h2 class="text-2xl font-black mt-2">⏰ Đấu Trường Thi Thử</h2><p class="font-bold mt-1">Thi thử bấm giờ như thi thật, chấm điểm tự động và mở khóa Bản đồ tư duy + Vấn đáp giải đáp thắc mắc ngay sau khi nộp bài.</p></button><button onclick="go('tutor')" class="pc p-5 text-left bt" style="background:linear-gradient(135deg,#BFF1DC,#D9C9FF);border-radius:1.5rem;box-shadow:0 8px 0 #2D2A4A"><div class="text-5xl">🎙️✍️</div><h2 class="text-2xl font-black mt-2">AI Tutor &amp; Bảng iPad</h2><p class="font-bold mt-1">Viết tay lên bảng iPad hoặc tải ảnh/PDF bài làm, Cú Đêm chấm theo barem điểm bạn tự chỉnh.</p></button><button onclick="go('stats')" class="pc p-5 text-left bt" style="background:linear-gradient(135deg,#FFF1B8,#FFD2D0);border-radius:1.5rem;box-shadow:0 8px 0 #2D2A4A"><div class="text-5xl">📊🦉</div><h2 class="text-2xl font-black mt-2">Hồ Sơ &amp; Chẩn Đoán Lỗi Sai</h2><p class="font-bold mt-1">Xem các câu đã sai theo chương và dạng bài, rồi nhờ AI chỉ ra lỗi hay gặp và cách khắc phục.</p></button></div>`}
 function pList(){const l=filtered();const el=$('#plist');
  if(!l.length){el.innerHTML='<div class="pc p-5 mt-4 text-center">🦉 Chưa có bài cho bộ lọc này. Bấm “Tạo bộ bài toán bằng AI” nhé!</div>';return}
  if(ST.pi>=l.length)ST.pi=0;
@@ -427,89 +358,94 @@ function submitEx(){const e=ST.ex;if(!e||e.done)return;clearInterval(ST.timer);e
 function resExam(a){const e=ST.ex,n=e.qs.length,sc=(e.ok/n*10).toFixed(1),cm=sc>=8?'Quá đỉnh luôn! Cú Đêm tự hào về cậu 🎉':sc>=5?'Khá ổn rồi, xem lại câu sai là lên hạng ngay nha 💪':'Không sao đâu, mình cùng gỡ rối từng câu nhé 🦉';
  a.innerHTML=`<div class="pc p-5 flex flex-wrap items-center gap-4"><div class="float">${owl(120)}</div><div><h2 class="text-3xl font-black">Điểm: ${sc}/10</h2><p class="font-bold">Đúng ${e.ok}/${n} câu</p><p class="mt-1">${cm}</p></div><button class="bt ml-auto" onclick="ST.ex=null;render()">🔁 Thi lại</button></div><h3 class="text-xl font-black mt-6">📝 Chữa chi tiết từng câu</h3>`+e.qs.map((q,i)=>qcard(q,'r',i+1)).join('')}
 
-/* ===== Diễn đàn Cộng đồng (Firebase Realtime Database + Google Auth) ===== */
-const FB_URL='https://web-xstk-default-rtdb.asia-southeast1.firebasedatabase.app';
-let ME=ls.get('me',null);if(!ME||!ME.uid){ME={uid:'u'+Math.random().toString(36).slice(2,10),avatar:['🦊','🐻','🐼','🐨','🐸','🦄','🐯'][Math.random()*7|0]};ls.set('me',ME)}
-const myUid=()=>currentUser?currentUser.uid:ME.uid;
-const myName=()=>currentUser?(currentUser.displayName||currentUser.email):(PROF.name||'Sinh viên ẩn danh');
-const myAvatar=()=>currentUser&&currentUser.photoURL?currentUser.photoURL:ME.avatar;
-const REACTS=[['like','👍 Thích'],['love','❤️ Yêu thích'],['wow','🤯 Xoắn não']];
-const SEEDS=[
-{id:'seed1',ch:1,title:'Có hoàn lại và không hoàn lại: sao đáp án khác?',body:'Mình bốc 2 bi từ hộp có 3 đỏ, 2 xanh. Bốc không hoàn lại thì $P(\\text{2 đỏ})$ khác có hoàn lại đúng không ạ?',an:'Minh Anh · K65',au:'seed-a',aa:'🐰',t:Date.now()-7200e3,likes:{},comments:{}},
-{id:'seed2',ch:3,title:'Nhị thức hay siêu bội?',body:'Lô 20 sản phẩm có 4 lỗi, lấy 5 sản phẩm không hoàn lại. Đề này dùng siêu bội hay nhị thức ạ? Vì sao?',an:'Quốc Bảo · K66',au:'seed-b',aa:'🐻',t:Date.now()-3600e3,likes:{},comments:{}},
-{id:'seed3',ch:6,title:'Miền bác bỏ hai phía ghi thế nào?',body:'Kiểm định hai phía với $\\alpha=0{,}05$ thì miền bác bỏ là $\vert{}z\vert{}>z_{0{,}025}$ đúng không ạ?',an:'Thu Hà · K65',au:'seed-c',aa:'🐼',t:Date.now()-1800e3,likes:{},comments:{}}];
-let POSTS=ls.get('forum',{});if(!POSTS||typeof POSTS!=='object')POSTS={};
-SEEDS.forEach(s=>{if(!POSTS[s.id])POSTS[s.id]=s});
-let FRIENDS=ls.get('friends',[]);let USERS={},fbPoll=null;
+/* --- Mở xem lại câu sai & ảnh đề (tutor) --- */
+function reviewMiss(id){const q=allQ().find(x=>x.id===id);if(!q)return toast('Câu này là đề AI tạo nên đã mất sau khi tải lại trang 🦉');
+ ST.ch=q.ch;ST.type='all';ST.lv='all';ST.pi=Math.max(0,filtered().findIndex(x=>x.id===id));go('practice')}
+async function problemPhoto(inp){const f=inp.files[0];if(!f)return;if(!KEY)return toast('Nhập API Key để Cú Đêm đọc đề nha 🦉');
+ const r=new FileReader();r.onload=async()=>{toast('🦉 Đang đọc đề trong ảnh...');
+  try{const t=await ai([{role:'user',parts:[{text:'Chép lại chính xác đề bài toán trong ảnh, giữ công thức bằng LaTeX $...$. Chỉ trả về nội dung đề, không lời dẫn.'},{inlineData:{mimeType:f.type||'image/jpeg',data:r.result.split(',')[1]}}]}],'Bạn là trợ lý OCR toán học tiếng Việt.');
+   const q={id:'u'+Date.now(),ch:ST.tch,type:'essay',lv:'Đề chụp ảnh',q:t.trim(),opts:[],ans:0,hint:'',sol:'',viz:'bellcurve_3d',vp:{},m:''};ST.gen.push(q);ST.tq=q.id;render()}
+  catch(e){toast('Lỗi: '+e.message)}};r.readAsDataURL(f)}
 
-async function fbFetch(path,method='GET',body=null){
- try{const opts={method,headers:{'Content-Type':'application/json'}};if(body!==null)opts.body=JSON.stringify(body);
-  const r=await fetch(`${FB_URL}/${path}.json`,opts);return await r.json()}catch(e){return null}}
+/* --- Diễn đàn XSTK: Gun.js realtime + cache cục bộ --- */
+Object.assign(ST,{fdraft:'',ftitle:'',cd:{}});
+let PADIMG='';
+const FORUM_PEERS=['https://gun-manhattan.herokuapp.com/gun','https://peer.wallie.io/gun'];
+let gun=null;try{if(window.Gun)gun=Gun({peers:FORUM_PEERS})}catch(e){gun=null}
+const ROOT=()=>gun.get('xstk-forum-v1');
+let ME=ls.get('me',null);if(!ME||!ME.uid){ME={uid:'u'+Math.random().toString(36).slice(2,10),avatar:['🦊','🐻','🐼','🐨','🐸','🦄','🐯'][Math.random()*7|0]};ls.set('me',ME)}
+const myName=()=>PROF.name||'Sinh viên ẩn danh';
+const attr=x=>esc(x).replace(/"/g,'&quot;');
+const REACTS=[['like','👍 Thích'],['love','❤️ Yêu thích'],['wow','🤯 Xoắn não']];
+const pack=p=>({id:p.id,title:p.title,ch:p.ch,body:p.body,img:p.img||'',an:p.an,au:p.au,aa:p.aa,t:p.t});
+const SEEDS=[
+{id:'seed1',ch:1,title:'Có hoàn lại và không hoàn lại: sao đáp án khác?',body:'Mình bốc 2 bi từ hộp có 3 đỏ, 2 xanh. Bốc không hoàn lại thì $P(\\text{2 đỏ})$ khác có hoàn lại đúng không ạ?',an:'Minh Anh · K65',au:'seed-a',aa:'🐰'},
+{id:'seed2',ch:3,title:'Nhị thức hay siêu bội?',body:'Lô 20 sản phẩm có 4 lỗi, lấy 5 sản phẩm không hoàn lại. Đề này dùng siêu bội hay nhị thức ạ? Vì sao?',an:'Quốc Bảo · K66',au:'seed-b',aa:'🐻'},
+{id:'seed3',ch:6,title:'Miền bác bỏ hai phía ghi thế nào?',body:'Kiểm định hai phía với $\\alpha=0{,}05$ thì miền bác bỏ là $|z|>z_{0{,}025}$ đúng không ạ? Mình hay nhầm sang $z_{0{,}05}$.',an:'Thu Hà · K65',au:'seed-c',aa:'🐼'},
+{id:'seed4',ch:4,title:'Mẹo Casio: tính x̄ và s nhanh',body:'Vào chế độ STAT, nhập dữ liệu rồi xem $\\bar{x}$ và $s$ trong phần kết quả. Ai dùng dòng máy khác thì chia sẻ thêm nhé!',an:'Đức Anh · K67',au:'seed-d',aa:'🐨'}];
+let POSTS=ls.get('forum',{});if(!POSTS||typeof POSTS!=='object')POSTS={};
+Object.values(POSTS).forEach(x=>{x.likes=x.likes||{};x.comments=x.comments||{}});
+SEEDS.forEach((s,k)=>{if(!POSTS[s.id])POSTS[s.id]={...s,t:Date.now()-k*3600e3,likes:{},comments:{}}});
+function fsave(){const c={};for(const k in POSTS){const x={...POSTS[k]};delete x.img;c[k]=x}ls.set('forum',c)}
+let FRIENDS=ls.get('friends',[]);const WATCHED=new Set();let USERS={},rT=null;
+function schedR(){clearTimeout(rT);rT=setTimeout(()=>{if(ST.view==='forum')rForum($('#app'))},150)}
+function watch(){const root=ROOT();
+ root.get('posts').map().on((x,id)=>{if(!x||!x.id)return;const old=POSTS[id]||{likes:{},comments:{}};
+  POSTS[id]={...old,id:x.id,title:x.title,ch:x.ch,body:x.body,img:x.img||old.img||'',an:x.an,au:x.au,aa:x.aa,t:x.t};
+  if(!WATCHED.has(id)){WATCHED.add(id);
+   root.get('posts').get(id).get('likes').map().on((v,uid)=>{POSTS[id].likes[uid]=v||null;schedR()});
+   root.get('posts').get(id).get('comments').map().on((c,cid)=>{if(c&&c.body){POSTS[id].comments[cid]=c;schedR()}})}
+  schedR()});
+ root.get('users').map().on((u,uid)=>{if(u&&u.name){USERS[uid]=u;schedR()}})}
+function heartbeat(){if(gun)ROOT().get('users').get(ME.uid).put({name:myName(),av:ME.avatar,seen:Date.now()})}
+function addFriend(uid){if(!uid||uid===ME.uid)return;if(!FRIENDS.includes(uid)){FRIENDS.push(uid);ls.set('friends',FRIENDS);if(gun)ROOT().get('friends').get(ME.uid).get(uid).put(true)}toast('Đã kết bạn 🤝');schedR()}
 function shrink(src,w=560){return new Promise(res=>{const im=new Image();im.onload=()=>{const c=document.createElement('canvas');c.width=w;c.height=im.height*w/im.width;const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,c.width,c.height);g.drawImage(im,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',.7))};im.onerror=()=>res('');im.src=src})}
-function addFriend(uid){if(!uid||uid===myUid())return;if(!FRIENDS.includes(uid)){FRIENDS.push(uid);ls.set('friends',FRIENDS);fbFetch(`friends/${myUid()}/${uid}`,'PUT',true)}toast('Đã kết bạn 🤝');if(ST.view==='forum')render()}
-async function pubPost(){
- const body=ST.fdraft.trim(),title=ST.ftitle.trim()||'Câu hỏi mới';if(!body)return toast('Viết nội dung trước nhé ✍️');
+async function pubPost(){const body=ST.fdraft.trim(),title=ST.ftitle.trim()||'Câu hỏi mới';if(!body)return toast('Viết nội dung trước nhé ✍️');
  const ch=+($('#fch')?$('#fch').value:1)||1;
  const img=($('#fdraw')&&$('#fdraw').checked&&PADIMG)?await shrink(PADIMG):'';
- const id='p'+Date.now().toString(36)+myUid().slice(0,4);
- const p={id,title,ch,body,img,an:myName(),au:myUid(),aa:myAvatar(),t:Date.now(),likes:{},comments:{}};
- POSTS[id]=p;ST.fdraft='';ST.ftitle='';ls.set('forum',POSTS);
- await fbFetch(`posts/${id}`,'PUT',p);toast('Đã đăng bài lên cộng đồng 🎉');if(ST.view==='forum')render()}
-async function react(pid,kind){const x=POSTS[pid];if(!x)return;x.likes=x.likes||{};const uid=myUid();const nv=x.likes[uid]===kind?null:kind;
- if(nv)x.likes[uid]=nv;else delete x.likes[uid];ls.set('forum',POSTS);
- await fbFetch(`posts/${pid}/likes/${uid}`,'PUT',nv);if(ST.view==='forum')render()}
-async function comment(pid,txt,isAI){txt=(txt||'').trim();if(!txt||!POSTS[pid])return;const cid='c'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
- const c=isAI?{id:cid,body:txt,an:'🦉 Cú Đêm AI',au:'owl',aa:'🦉',t:Date.now()}:{id:cid,body:txt,an:myName(),au:myUid(),aa:myAvatar(),t:Date.now()};
- POSTS[pid].comments=POSTS[pid].comments||{};POSTS[pid].comments[cid]=c;ls.set('forum',POSTS);
- await fbFetch(`posts/${pid}/comments/${cid}`,'PUT',c);if(ST.view==='forum')render()}
+ const id='p'+Date.now().toString(36)+ME.uid.slice(1,4);
+ const p={id,title,ch,body,img,an:myName(),au:ME.uid,aa:ME.avatar,t:Date.now()};
+ POSTS[id]={...p,likes:{},comments:{}};ST.fdraft='';ST.ftitle='';fsave();
+ if(gun)ROOT().get('posts').get(id).put(pack(p));
+ toast('Đã đăng bài 🎉');schedR()}
+function react(pid,kind){const x=POSTS[pid];if(!x)return;const nv=x.likes[ME.uid]===kind?null:kind;x.likes[ME.uid]=nv;
+ if(gun)ROOT().get('posts').get(pid).get('likes').get(ME.uid).put(nv);schedR()}
+function comment(pid,txt,isAI){txt=(txt||'').trim();if(!txt||!POSTS[pid])return;const cid='c'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+ const c=isAI?{id:cid,body:txt,an:'🦉 Cú Đêm AI',au:'owl',aa:'🦉',t:Date.now()}:{id:cid,body:txt,an:myName(),au:ME.uid,aa:ME.avatar,t:Date.now()};
+ POSTS[pid].comments[cid]=c;fsave();if(gun)ROOT().get('posts').get(pid).get('comments').get(cid).put(c);schedR()}
 function cmt(pid){const v=ST.cd[pid]||'';ST.cd[pid]='';comment(pid,v)}
 async function aiReply(pid){const x=POSTS[pid];if(!x)return;if(!KEY)return toast('Nhập API Key để Cú Đêm vào giải nha 🦉');toast('🦉 Cú Đêm đang đọc câu hỏi...');
  try{const r=await ai(`Câu hỏi trên diễn đàn (Chương ${x.ch}): ${x.title}\n${x.body}\nHãy giải đáp chuẩn xác, dễ hiểu, ngắn gọn (tối đa 8 câu). Công thức LaTeX dùng $...$.`,'Bạn là Cú Đêm, giảng viên XSTK Gen Z, thân thiện và chính xác.');comment(pid,r,true)}
  catch(e){toast('Lỗi: '+e.message)}}
 function shareP(pid){const x=POSTS[pid];if(!x)return;const txt=x.title+'\n'+x.body;
  try{navigator.clipboard.writeText(txt).then(()=>toast('Đã sao chép nội dung bài 📋'),()=>toast('Trình duyệt không cho sao chép'))}catch(e){toast('Trình duyệt không cho sao chép')}}
-async function syncFB(){
- const d=await fbFetch('posts');
- if(d&&typeof d==='object'){
-   let chg=false;
-   for(const id in d){
-     const rPost=d[id];if(!rPost||!rPost.id)continue;
-     const lPost=POSTS[id];
-     const rCnt=Object.keys(rPost.comments||{}).length+Object.keys(rPost.likes||{}).length;
-     const lCnt=lPost?(Object.keys(lPost.comments||{}).length+Object.keys(lPost.likes||{}).length):-1;
-     if(!lPost||rCnt!==lCnt){POSTS[id]={...rPost,likes:rPost.likes||{},comments:rPost.comments||{}};chg=true}
-   }
-   if(chg&&ST.view==='forum'){const act=document.activeElement;if(!act||!['INPUT','TEXTAREA'].includes(act.tagName))render()}
- }
- await fbFetch(`users/${myUid()}`,'PUT',{name:myName(),av:myAvatar(),seen:Date.now()});
- const u=await fbFetch('users');if(u)USERS=u}
-function startSync(){clearInterval(fbPoll);syncFB();fbPoll=setInterval(syncFB,5000)}
-
-const avHTML=(av,cls='w-8 h-8')=>av&&String(av).startsWith('http')?`<img src="${av}" class="${cls} rounded-full border-2 border-[#2D2A4A] inline-block">`:`<span class="text-2xl">${av||'🙂'}</span>`;
 function composeHTML(){return `<div class="pc p-4"><b>🌐 Bạn đang thắc mắc bài Xác suất thống kê nào?</b>
- ${!currentUser?`<div class="mt-2 p-2 rounded-xl bg-[#FFF1B8] border-2 border-[#2D2A4A] text-xs font-bold flex items-center justify-between"><span>💡 Bạn có thể bấm "🔐 Đăng nhập Google" ở trên để dùng tên & avatar Gmail thật!</span><button class="bt text-xs bg-white" onclick="loginGoogle()">Đăng nhập</button></div>`:''}
  <input id="ftitle" class="w-full mt-2" placeholder="Tiêu đề ngắn gọn" value="${attr(ST.ftitle)}" oninput="ST.ftitle=this.value">
  <textarea id="fbody" rows="3" class="w-full mt-2" placeholder="Gõ nội dung, công thức LaTeX dùng $...$" oninput="ST.fdraft=this.value">${esc(ST.fdraft)}</textarea>
  <div class="flex flex-wrap gap-2 mt-2 items-center"><select id="fch">${CH.map((c,i)=>`<option value="${i+1}">Chương ${i+1}</option>`).join('')}</select>
  <label class="text-sm font-bold"><input type="checkbox" id="fdraw" ${PADIMG?'':'disabled'}> 📎 Đính kèm bản vẽ iPad</label><button class="bt ml-auto" onclick="pubPost()">📮 Đăng bài</button></div></div>`}
-function postHTML(x){const likes=x.likes||{};const ks=Object.values(likes).filter(Boolean);const cnt=k=>ks.filter(v=>v===k).length;const mine=likes[myUid()];
- const cms=Object.values(x.comments||{}).sort((a,b)=>a.t-b.t);
- return `<article class="pc p-4"><div class="flex items-center gap-2">${avHTML(x.aa)}<div><b>${esc(x.an||'Ẩn danh')}</b><div class="text-xs">${new Date(x.t).toLocaleString('vi-VN')} · Chương ${x.ch||'?'}</div></div>${x.au&&x.au!==myUid()?`<button class="bt text-xs ml-auto" onclick="addFriend('${x.au}')">${FRIENDS.includes(x.au)?'✔ Bạn bè':'➕ Kết bạn'}</button>`:''}</div>
+function postHTML(x){const ks=Object.values(x.likes).filter(Boolean);const cnt=k=>ks.filter(v=>v===k).length;const mine=x.likes[ME.uid];
+ const cms=Object.values(x.comments).sort((a,b)=>a.t-b.t);
+ return `<article class="pc p-4"><div class="flex items-center gap-2"><span class="text-2xl">${x.aa||'🙂'}</span><div><b>${esc(x.an||'Ẩn danh')}</b><div class="text-xs">${new Date(x.t).toLocaleString('vi-VN')} · Chương ${x.ch||'?'}</div></div>${x.au&&x.au!==ME.uid?`<button class="bt text-xs ml-auto" onclick="addFriend('${x.au}')">${FRIENDS.includes(x.au)?'✔ Bạn bè':'➕ Kết bạn'}</button>`:''}</div>
  <h3 class="font-black mt-2">${esc(x.title)}</h3><div class="mt-1">${esc(x.body).replace(/\n/g,'<br>')}</div>${x.img?`<img src="${x.img}" class="mt-2 rounded-xl border-2 border-[#2D2A4A] max-h-72">`:''}
- <div class="flex flex-wrap gap-2 mt-3">${REACTS.map(([k,l])=>`<button class="bt text-xs ${mine===k?'on':''}" onclick="react('${x.id}','${k}')">${l}${cnt(k)}</button>`).join('')}<button class="bt text-xs" onclick="shareP('${x.id}')">↗️ Chia sẻ</button><button class="bt text-xs" onclick="aiReply('${x.id}')">🦉 Tag Cú Đêm AI vào giải giúp</button></div>
- <div class="mt-3 space-y-2">${cms.map(c=>`<div class="rounded-2xl bg-[#F8FAFC] border-2 border-[#2D2A4A] p-2 text-sm"><b>${avHTML(c.aa,'w-5 h-5')} ${esc(c.an\vert{}\vert{}'?')}:</b>${esc(c.body).replace(/\n/g,'<br>')}</div>`).join('')}</div>
+ <div class="flex flex-wrap gap-2 mt-3">${REACTS.map(([k,l])=>`<button class="bt text-xs ${mine===k?'on':''}" onclick="react('${x.id}','${k}')">${l} ${cnt(k)}</button>`).join('')}<button class="bt text-xs" onclick="shareP('${x.id}')">↗️ Chia sẻ</button><button class="bt text-xs" onclick="aiReply('${x.id}')">🦉 Tag Cú Đêm AI vào giải giúp</button></div>
+ <div class="mt-3 space-y-2">${cms.map(c=>`<div class="rounded-2xl bg-[#F8FAFC] border-2 border-[#2D2A4A] p-2 text-sm"><b>${c.aa||''} ${esc(c.an||'?')}:</b> ${esc(c.body).replace(/\n/g,'<br>')}</div>`).join('')}</div>
  <div class="flex gap-2 mt-2"><input class="flex-1" placeholder="Viết bình luận..." value="${attr(ST.cd[x.id]||'')}" oninput="ST.cd['${x.id}']=this.value" onkeydown="if(event.key==='Enter')cmt('${x.id}')"><button class="bt text-sm" onclick="cmt('${x.id}')">Gửi</button></div></article>`}
 function rForum(a){const now=Date.now();const posts=Object.values(POSTS).sort((x,y)=>y.t-x.t);
- const online=Object.entries(USERS).filter(([u,v])=>u!==myUid()&&v&&v.seen&&now-v.seen<120000);
- const pts={};posts.forEach(x=>{const n=x.an||'?';pts[n]=(pts[n]||0)+1+Object.keys(x.comments||{}).length});
+ const online=Object.entries(USERS).filter(([u,v])=>u!==ME.uid&&v.seen&&now-v.seen<90000);
+ const pts={};posts.forEach(x=>{const n=x.an||'?';pts[n]=(pts[n]||0)+1+Object.keys(x.comments).length});
  const top=Object.entries(pts).sort((x,y)=>y[1]-x[1]).slice(0,5);
- a.innerHTML=`<div class="grid md:grid-cols-12 gap-4"><aside class="md:col-span-3 space-y-4"><div class="pc p-4 text-center"><div>${avHTML(myAvatar(),'w-16 h-16 mx-auto')}</div><b class="block mt-2">${esc(myName())}</b><div class="text-xs">${esc(PROF.title||'')}</div></div>
- <div class="pc p-4"><b>🟢 Bạn học đang online</b>${online.length?online.map(([u,v])=>`<div class="flex items-center gap-2 mt-2 text-sm">${avHTML(v.av,'w-6 h-6')}<span class="flex-1 font-bold">${esc(v.name)}</span>${FRIENDS.includes(u)?'<span class="tag bg-[#BFF1DC]">Bạn bè</span>':`<button class="bt text-xs" onclick="addFriend('${u}')">➕ Kết bạn</button>`}</div>`).join(''):'<p class="text-sm mt-2">Chưa có ai khác online cùng lúc. Mở thêm 1 tab hoặc điện thoại để test nhé!</p>'}</div></aside>
+ const trend=CH.map((c,i)=>({i:i+1,n:posts.filter(x=>x.ch===i+1).length})).filter(x=>x.n).sort((x,y)=>y.n-x.n).slice(0,3);
+ a.innerHTML=`${gun?'':'<div class="pc p-3 mb-4 text-sm">🦉 Đang chạy ngoại tuyến: bài chỉ lưu trên máy này.</div>'}
+ <div class="grid md:grid-cols-12 gap-4"><aside class="md:col-span-3 space-y-4"><div class="pc p-4 text-center"><div class="text-4xl">${ME.avatar}</div><b>${esc(myName())}</b><div class="text-xs">${esc(PROF.title||'')}</div></div>
+ <div class="pc p-4"><b>🟢 Bạn học đang hoạt động</b>${online.length?online.map(([u,v])=>`<div class="flex items-center gap-2 mt-2 text-sm"><span>${v.av||'🙂'}</span><span class="flex-1 font-bold">${esc(v.name)}</span>${FRIENDS.includes(u)?'<span class="tag bg-[#BFF1DC]">Bạn bè</span>':`<button class="bt text-xs" onclick="addFriend('${u}')">➕ Kết bạn</button>`}</div>`).join(''):'<p class="text-sm mt-2">Chưa có ai online. Mời bạn bè mở cùng trang nhé!</p>'}</div></aside>
  <section class="md:col-span-6 space-y-4">${composeHTML()}${posts.map(postHTML).join('')}</section>
- <aside class="md:col-span-3 space-y-4"><div class="pc p-4"><b>🏅 Thành viên tích cực</b>${top.length?top.map(([n,v],i)=>`<div class="flex justify-between text-sm mt-1"><span>${i+1}. ${esc(n)}</span><b>${v}đ</b></div>`).join(''):'<p class="text-sm">Chưa có dữ liệu</p>'}</div></aside></div>`;tx()}
+ <aside class="md:col-span-3 space-y-4"><div class="pc p-4"><b>🏅 Thành viên tích cực</b>${top.length?top.map(([n,v],i)=>`<div class="flex justify-between text-sm mt-1"><span>${i+1}. ${esc(n)}</span><b>${v}đ</b></div>`).join(''):'<p class="text-sm">Chưa có dữ liệu</p>'}</div>
+ <div class="pc p-4"><b>🔥 Chủ đề đang hot</b>${trend.length?trend.map(t=>`<div class="tag bg-[#FFF1B8] inline-block m-1">Chương ${t.i} · ${t.n} bài</div>`).join(''):'<p class="text-sm">Chưa có bài nào</p>'}</div></aside></div>`;tx()}
+if(gun){SEEDS.forEach(s=>ROOT().get('posts').get(s.id).put(pack(POSTS[s.id])));watch();heartbeat();setInterval(heartbeat,30000)}
 
 /* ===== Khởi động ===== */
-(function(){const c=ls.get('cfg',{});KEY=c.k||'';MODEL=c.m||MODEL;$('#key').value=KEY;$('#model').value=MODEL;renderAuth();render();startSync()})();
+(function(){const c=ls.get('cfg',{});KEY=c.k||'';MODEL=c.m||MODEL;$('#key').value=KEY;$('#model').value=MODEL;render()})();
 </script>
 </body>
 </html>
