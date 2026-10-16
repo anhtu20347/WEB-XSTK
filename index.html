@@ -57,7 +57,7 @@ textarea,input,select{border:3px solid var(--ink);border-radius:.9rem;padding:.3
 <div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 pc px-4 py-2 font-extrabold hidden z-50"></div>
 
 <script>
-/* ===== Firebase Config[cite: 25] ===== */
+/* ===== Firebase Config ===== */
 const firebaseConfig = {
   apiKey: "AIzaSyAcSJ9u6JNPDZE6JX-LxxXLFehDHEm6Bo",
   authDomain: "web-xstk.firebaseapp.com",
@@ -309,7 +309,7 @@ async function gradeTutor(){const all=[...BANK,...ST.gen];const q=all.find(x=>x.
  el.innerHTML='🦉 Cú Đêm đang đọc bài...';
  try{const res=await ai([{role:'user',parts:[{text:`Chấm bài cho đề: ${q.q}\nLời giải: ${q.sol}\nBarem: ${RUBRIC.map(r=>r.k+': '+r.p).join(', ')}. Cuối cùng ghi 'Tổng: X/10'.`},{inlineData:src}]}],'Chấm bài nghiêm túc.');
   el.innerHTML=`<div class="pc p-4 bg-[#EFFFF8]">${res.replace(/\n/g,'<br>')}</div>`;const sc=scoreOf(res);if(sc!==null){recAtt(q,sc>=5);if(sc<5)logMiss(q,'essay')}
- }catch(e){el.innerHTML='Lỗi: '+e.message}tx()}
+ }catch(e){el.innerHTML='Lỗi: '+esc(e.message)}tx()}
 
 function rHome(a){a.innerHTML=`<section class="pc p-5 flex flex-wrap items-center gap-4 bg-white"><div class="float">${owl(150)}</div><div class="flex-1"><h1 class="text-3xl font-black">Xác suất &amp; Thống kê không đáng sợ, có Cú Đêm lo!</h1><p class="mt-1 font-bold">Luyện tập, thi thử, chấm bài AI và kết nối cộng đồng.</p></div></section>
 <div class="grid md:grid-cols-2 gap-6 mt-6">
