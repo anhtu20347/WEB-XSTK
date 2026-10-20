@@ -35,13 +35,13 @@ var CH = [
 ];
 /* Thanh điều hướng mới: Bỏ Luyện tập chung, chia thành các module độc lập a, b, c, d, e, f */
 var NAV = [
-  ['home','🏠 Trang chủ (Mục lục)'],
-  ['voice_ipad','🎙️ (a) Voice & Bảng iPad'],
-  ['essay_sim','✍️ (b) Tự luận tương tự'],
-  ['mcq_sim','☑️ (c) Trắc nghiệm tương tự'],
-  ['stats','📊 (d) Thống kê lỗi & Hồ sơ'],
-  ['mindmap','🧠 (e) Bản đồ tư duy'],
-  ['polya_clone','🧭 (f) Quy trình 4 bước Polya'],
+  ['home','🏠 Trang chủ'],
+  ['voice_ipad','🎙️ Voice & Bảng iPad'],
+  ['essay_sim','✍️ Tự luận tương tự'],
+  ['mcq_sim','☑️ Trắc nghiệm tương tự'],
+  ['polya_clone','🧭 Quy trình 4 bước Polya'],
+  ['mindmap','🧠 Bản đồ tư duy'],
+  ['stats','📊 Thống kê lỗi & Hồ sơ'],
   ['exam','⏰ Thi thử'],
   ['forum','🌐 Diễn đàn']
 ];
